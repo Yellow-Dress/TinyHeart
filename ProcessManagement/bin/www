@@ -7,6 +7,7 @@
 var app = require('../app');
 var debug = require('debug')('processmanagement:server');
 var http = require('http');
+var waterline = require('../config/waterline');
 
 /**
  * Get port from environment and store in Express.
@@ -22,10 +23,26 @@ app.set('port', port);
 var server = http.createServer(app);
 
 /**
- * Listen on provided port, on all network interfaces.
+ * [waterline]
+ * @param  {[type]} err       [description]
+ * @param  {[type]} models){               if(err) {    console.log('waterline initialize failed, err:', err);    return;  }  console.log('waterline initialize success.');  app.set('models', models.collections);var server [description]
+ * @return {[type]}           [description]
  */
+waterline.orm.initialize(waterline.config, function(err, models){
+  if(err) {
+    console.log('waterline initialize failed, err:', err);
+    return;
+  }
+  console.log('waterline initialize success.');
+  app.set('models', models.collections);
+  /**
+   * Listen on provided port, on all network interfaces.
+   */
 
-server.listen(port);
+  server.listen(port);
+});
+
+
 server.on('error', onError);
 server.on('listening', onListening);
 
