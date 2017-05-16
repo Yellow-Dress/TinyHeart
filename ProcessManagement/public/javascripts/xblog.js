@@ -47,3 +47,7 @@ function down(obj) {
         nextTR.insertBefore(objParentTR);
     }
 }
+
+function editProcess (id) {
+    
+}
