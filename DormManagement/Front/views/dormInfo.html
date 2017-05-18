@@ -8,12 +8,18 @@
 		<script type="text/javascript" src="../scripts/studentInfo.js" charset="utf-8"></script>
 		<link type="text/css" href="../styles/css/common.css" rel="stylesheet"/>
 		<link type="text/css" href="../styles/css/info.css" rel="stylesheet" />
-		<title>辅导员考核系统 - uces</title>
+		<link rel="icon" href="../img/favicon.ico" type="image/x-icon" />
+		<link rel="shortcut icon" href="../img/favicon.ico" type="image/x-icon" />
+		<title>宿舍管理系统 - DMS</title>
 	</head>
 	<body id="studentInfo">
 		<div class="nav">
-			<div class="logo">辅导员考核系统</div>
-			<div class="user"><i class="iconfont">&#xe787;</i>Administrator</div>
+			<div class="logo">宿舍管理系统</div>
+			<div class="user">
+				<i class="iconfont">&#xe787;</i>admin
+				<span class="btn btn-green js-func" style="margin-left: 10px">返回功能选择</span>
+				<span class="btn btn-red js-logout" style="margin-left: 10px">退出</span>
+			</div>
 		</div>
 		<div class="content">
 			<div class="main-block large">
@@ -23,6 +29,7 @@
 					<span></span>
 					<span class="student-count" >共 <i>{{ students.length }}</i> 人</span>
 					<div class="operation-box">
+						<span class="btn btn-green">Excel模板下载</span>
 						<span class="btn btn-green js-excel">Excel导入</span>
 						<span class="btn btn-yellow js-clear">清空</span>
 						<span class="btn btn-red js-delete">删除</span>

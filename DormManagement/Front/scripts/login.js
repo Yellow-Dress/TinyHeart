@@ -21,25 +21,20 @@ Zepto(function($){
         $.ajax({
             type: 'POST',
             url: 'http://localhost:4000/login',
-            // data to be added to query string:
             data: { 
                 username: username,
                 password: password
             },
-            // type of data we are expecting in return:
             dataType: 'json',
-            // jsonp: "jsoncallback",
-            // context: $('body'),
             success: function(data){
-                
-                if (data.isSuccess == true) {
-                    var _date = new Date();
-                    _date.setDate(_date.getDate() + 1);
-                    _date.toGMTString();
-                    document.cookie = "username=" + username + ";expires=" + _date;
-                    window.location.href = "./chooseFunc.html";
+                if (data.isConnect == false) {
+                    alert('数据库连接失败！');
                 } else {
-                    alert("用户名或密码输入错误");
+                    if (data.isSuccess == false) {
+                        alert('用户名或密码输入错误！');
+                    } else {
+                        window.location.href = './chooseFunc.html';
+                    }
                 }
             },
             error: function(xhr, type){

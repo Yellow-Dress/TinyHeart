@@ -173,7 +173,7 @@
         .content .main-block .studentInfo-bd table tbody tr {
           cursor: pointer; }
           .content .main-block .studentInfo-bd table tbody tr:hover {
-            background: #ddd; }
+            background: #eee; }
         .content .main-block .studentInfo-bd table tbody td {
           padding: 12px 5px;
           font-style: normal;
@@ -185,6 +185,10 @@
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis; }
+          .content .main-block .studentInfo-bd table tbody td.available {
+            color: #8BC58A; }
+          .content .main-block .studentInfo-bd table tbody td.unavailable {
+            color: #DD6B61; }
           .content .main-block .studentInfo-bd table tbody td.hasPhoto {
             color: #8BC58A; }
       .content .main-block .studentInfo-bd .pagination {
@@ -247,7 +251,7 @@
         margin: 0px 8px; }
     .modal .modal-content.student {
       width: 560px;
-      height: 625px; }
+      height: 720px; }
       .modal .modal-content.student .row {
         width: 100%; }
       .modal .modal-content.student .sm-item {
@@ -289,9 +293,13 @@
   width: 48px;
   border-radius: 4px;
   -webkit-border-radius: 4px;
-  padding: 4px 8px;
+  padding: 2px 8px;
   margin-left: 4px;
-  cursor: pointer; }
+  cursor: pointer;
+  font-size: 14px; }
+  .btn.label {
+    cursor: default;
+    width: auto; }
   .btn.btn-dark-green {
     background: #5c825b; }
   .btn.btn-green {
@@ -304,5 +312,23 @@
     background: #0086b3; }
   .btn.btn-orange {
     background: #f0ad4e; }
+
+.search-input {
+  display: inline-block;
+  width: 150px;
+  height: 18px;
+  padding: 4px;
+  font-size: 14px;
+  color: #555;
+  background-color: #fff;
+  background-image: none;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
+  -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+  -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+  transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+  margin-left: 4px; }
 
 /*# sourceMappingURL=info.css.map */

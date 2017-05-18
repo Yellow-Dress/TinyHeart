@@ -1,15 +1,45 @@
 Zepto(function($){
 
-    if (localStorage.getItem('teacherInfo') == null) {
-        alert('请先选择一名老师！');
-        window.location.href = "./teacherInfo.html";
-        return;
-    }
+    // 返回功能选择
+    $('.js-func').on('click', function() {
+        window.location.href = './chooseFunc.html';
+    });
 
-    var teacherInfo = JSON.parse(localStorage.getItem('teacherInfo'));
+    // 注销并退出
+    $('.js-logout').on('click', function() {
 
-    var studentInfo_vm = new Vue({
-        el: '#studentInfo',
+    });
+
+    $('.js-tbody').on('click', function(e) {
+        if (e.target.tagName == 'TD') {
+            $(e.target).parents('tr').find('.js-selectOne')[0].checked ? 
+                $(e.target).parents('tr').find('.js-selectOne')[0].checked = false :
+                $(e.target).parents('tr').find('.js-selectOne')[0].checked = 'checked';
+            e.stopPropagation();
+        }
+        
+    })
+
+    $('.js-upload').on('click', function(e) {
+        e.preventDefault();
+
+        $('#uploadBedInfo').trigger('click');
+    });
+
+    $('#uploadBedInfo').on('change', function(e) {
+        var path = $('#uploadBedInfo').val();
+
+        var tempArr = path.split('\\');
+        
+        if (tempArr[tempArr.length - 1].indexOf('.xlsx') != -1) {
+            $('#uploadBedInfoForm').submit();
+        } else {
+            alert('上传文件格式有误！');
+        }
+    })
+
+    var bedInfo_vm = new Vue({
+        el: '#bedInfo',
         data: {
             teacherInfo: teacherInfo,
             students: {}
@@ -17,7 +47,7 @@ Zepto(function($){
         methods: {
 
         }
-    });
+    }); 
 
     $.ajax({
         type: 'POST',

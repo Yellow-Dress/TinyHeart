@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<link type="text/css" href="../styles/css/common.css" rel="stylesheet"/>
+		<link type="text/css" href="../styles/css/info.css" rel="stylesheet" />
+		<link rel="icon" href="../img/favicon.ico" type="image/x-icon" />
+		<link rel="shortcut icon" href="../img/favicon.ico" type="image/x-icon" />
+		<title>宿舍管理系统 - DMS</title>
+	</head>
+	<body id="bedInfo">
+		<div class="nav">
+			<div class="logo">宿舍管理系统</div>
+			<div class="user">
+				<i class="iconfont">&#xe787;</i>admin
+				<span class="btn btn-green js-func" style="margin-left: 10px">返回功能选择</span>
+				<span class="btn btn-red js-logout" style="margin-left: 10px">退出</span>
+			</div>
+		</div>
+		<div class="content">
+			<div class="main-block large">
+				<div class="studentInfo-hd">
+					<!--<span class="back-arrow js-back"><strong>&#8678</strong></span>	-->
+					<span class="teacher-name"><strong>宿舍床位情况</strong></span>
+					<span class="student-count" >共 <i>{{ students.length }}</i> 个</span>
+					<span style="margin-left: 60px">宿舍号：</span>
+					<input class="search-input" type="text" />
+					<span class="btn btn-blue">搜索</span>
+					<span style="margin-left: 8px">学号：</span>
+					<input class="search-input" type="text" />
+					<span class="btn btn-blue">搜索</span>
+					<div class="operation-box">
+						<span class="btn btn-green"><a href="http://localhost:4000/getBedInfoTemplate" style="text-decoration: none; color: #fff;">Excel模板下载</a></span>
+						<span class="btn btn-green js-upload">Excel导入</span>
+						<form id="uploadBedInfoForm" action="http://localhost:4000/uploadBedInfo" name="bedInfo" method="post" enctype= "multipart/form-data" style="display: none;"> 
+							<input id="uploadBedInfo" type="file" name="upfile" />  
+						</form>  
+						<span class="btn btn-yellow js-addStudent">分配学生</span>
+						<span class="btn btn-orange js-addStudent">办理入住</span>
+						<span class="btn btn-blue js-edit">办理退宿</span>
+						<span class="btn btn-red js-clear">置为不可用</span>
+					</div>
+				</div>
+				<div class="studentInfo-bd">
+					<table cellpadding="0" cellspacing="0" border="0">
+						<thead>
+							<tr>
+								<th style="width: 10px;"><input type="checkbox" class="js-selectAll"/></th>
+								<th style="width: 5%">楼号</th>
+								<th style="width: 5%;">宿舍号</th>
+								<th style="width: 5%">床位编号</th>
+								<th style="width: 5%">性别</th>
+								<th style="width: 8%">状态</th>
+								<th style="width: 6%">是否可用</th>
+								<th style="width: 5%">学生学号</th>
+								<th style="width: 6%">学生姓名</th>
+<!--
+								<th style="width: 3%">家庭经济</th>
+								<th style="width: 2%">是否干部</th>
+								<th style="width: 10%; overflow: hidden;">其他情况</th>
+								<th style="width: 10%; overflow: hidden;">辅导情况</th>
+								<th style="width: 2%">照片</th>
+								<th style="width: 5%">备注</th>-->
+							</tr>
+						</thead>
+						<tbody class="js-tbody">
+							<tr>	
+								<td><input type="checkbox" class="js-selectOne" /></td>
+								<td>5</td>
+								<td>5214</td>
+								<td>1</td>
+								<td>女</td>
+								<td>已入住</td>
+								<td class="available"><strong>√</strong></td>
+								<td>1601210652</td>
+								<td>罗琳</td>
+							</tr>
+							<tr>	
+								<td><input type="checkbox" class="js-selectOne" /></td>
+								<td>5</td>
+								<td>5214</td>
+								<td>1</td>
+								<td>女</td>
+								<td>已入住</td>
+								<td class="unavailable"><strong>×</strong></td>
+								<td>1601210652</td>
+								<td>罗琳</td>
+							</tr>
+							<tr v-for="student in students" data-id="{{ student.id }}">
+								<td><input type="checkbox" class="js-selectOne" /></td>
+								<td class="js-studentId">{{ student.student_id }}</td>
+								<td>{{ student.student_name }}</td>
+								<td>{{ student.class }}</td>
+								<td>{{ student.dorm_id }}</td>
+								<td>{{ student.major }}</td>
+								<td>{{ student.origin }}</td>
+								<td>{{ student.party }}</td>
+								<!--<td>{{ student.study }}</td>
+								<td>{{ student.family }}</td>
+								<td>{{ student.isleader }}</td>
+								<td><span>{{ student.others }}</span></td>
+								<td><span>{{ student.guidance }}</span></td>
+								<td class="hasPhoto">
+									<strong v-if="student.hasPhoto">√</strong>
+								</td>
+								<td></td>-->
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="modal">
+			<div class="modal-content student">
+				<span class="title"><strong>增加/修改考核学生</strong></span>
+				<div class="row">
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">学号：</div>
+							<div class="input">
+								<input type="text" class="js-studentId"/>
+							</div>
+						</div>
+					</div>
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">姓名：</div>
+							<div class="input">
+								<input type="text" class="js-studentName"/>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">班级：</div>
+							<div class="input">
+								<input type="text" class="js-class"/>
+							</div>
+						</div>
+					</div>
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">宿舍号：</div>
+							<div class="input">
+								<input type="text" class="js-dormId"/>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">专业：</div>
+							<div class="input">
+								<input type="text" class="js-major"/>
+							</div>
+						</div>
+					</div>
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">生源地：</div>
+							<div class="input">
+								<input type="text" class="js-origin"/>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">政治面貌：</div>
+							<div class="input">
+								<input type="text" list="party-option" class="js-party"/>
+								<datalist id="party-option">
+									<option>群众</option>
+									<option>共青团员</option>
+									<option>中共预备党员</option>
+									<option>中共党员</option>
+								</datalist>
+							</div>
+						</div>
+					</div>
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">学习排名(eg.00/00)：</div>
+							<div class="input">
+								<input type="text" class="js-study"/>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">家庭经济：</div>
+							<div class="input">
+								<input type="text" class="js-family"/>
+							</div>
+						</div>
+					</div>
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">是否干部：</div>
+							<div class="input">
+								<input type="text" list="leader-option" class="js-isLeader" /> 
+								<datalist id="leader-option">
+									<option>是</option>
+									<option>否</option>
+								</datalist>
+							</div>	
+						</div>
+					</div>				
+				</div>
+				<div class="row">
+					<div class="ful-item">
+						<div class="item-content">
+							<div class="text">其他情况：</div>
+							<textarea class="js-others"></textarea>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="ful-item">
+						<div class="item-content">
+							<div class="text">辅导情况：</div>
+							<textarea class="js-guidance"></textarea>
+						</div>
+					</div>
+				</div>
+				<div class="operation-box">
+					<span class="btn btn-green js-submit">确认</span><span class="btn btn-red js-cancel">取消</span>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../scripts/vue.js"></script>
+		<script type="text/javascript" src="../scripts/zepto.min.js"></script>
+		<script type="text/javascript" src="../scripts/common.js"></script>
+		<script type="text/javascript" src="../scripts/bedInfo.js" charset="utf-8"></script>
+	</body>
+</html>
