@@ -16,22 +16,17 @@
 <body>
     
     <div class="container">
-      <% posts.forEach(function (post, index) { %>
         <div class="header clearfix">
             <h3 class="text-muted"><%= post.title %></h3>
             <span class="">作者：<%= post.user_name 
 
 %>&nbsp;&nbsp;&nbsp;</span>
-            <span><%= post.create_time %></span>
-            <span class="label label-primary"> <%= post.key %> </span>
           </div>
 
           <div class="jumbotron">
             <p class="lead"><%= post.content %></p>
           </div>
-      <% }) %>
-
-
+  
       <footer class="footer">
         <p>&copy; 2017 XIXI. Note备17040101&middot; </p>
         

@@ -23,6 +23,12 @@ module.exports = Waterline.Collection.extend({
         },
         sequence: {
             type: 'integer'
+        },
+        process_name: {
+            type: 'string'
+        },
+        process_status:{
+            type: 'integer'
         }
     }
 });

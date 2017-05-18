@@ -4,6 +4,9 @@ var crypto = require('crypto');
 var UserController = require('../controllers/userController');
 var ProcessController = require('../controllers/processController');
 
+/**
+ * 登录
+ */
 router.get('/',checkIsLogin);
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -17,6 +20,9 @@ router.get('/', function(req, res, next) {
 
 router.post('/',UserController.login);
 
+/**
+ * 注册
+ */
 router.get('/register',checkIsLogin);
 router.get('/register',function(req,res){
     res.render('register',{
@@ -28,6 +34,12 @@ router.get('/register',function(req,res){
 });
 router.post('/register',UserController.register);
 
+/**
+ * 验证码
+ * @param  {[type]} req    [description]
+ * @param  {[type]} res){                 var captchapng [description]
+ * @return {[type]}        [description]
+ */
 router.route('/captcha.png').get(function(req,res){
     var captchapng = require('captchapng');
     if(req.url.indexOf('/captcha.png')==0) {
@@ -46,12 +58,23 @@ router.route('/captcha.png').get(function(req,res){
 console.log('Web server started.\n http:\\\\127.0.0.1:8181\\captcha.png');
 });
 
+/**
+ * 主页
+ */
 router.get('/home',checkLogin);
 router.get('/home', ProcessController.getProcessList);
 
+/**
+ * 流程详情页
+ */
 router.get('/detail*',checkLogin);
-router.get('/detail*', ProcessController.getProcessDetailById);
+router.get('/detail*', function(req,res){
+    ProcessController.getProcessDetailById(req,res,'detail');
+});
 
+/**
+ * 添加流程页
+ */
 router.get('/post',checkLogin);
 router.get('/post', function(req, res) {
 
@@ -67,9 +90,19 @@ router.get('/post', function(req, res) {
 router.post('/postProcess', checkLogin);
 router.post('/postProcess', ProcessController.addProcess);
 
+/**
+ * 更新流程排序
+ */
 router.post('/updateSeq', checkLogin);
 router.post('/updateSeq', ProcessController.updateProcessSeq);
 
+router.get('/edit',checkLogin);
+router.get('/edit*',function(req,res) {
+    ProcessController.getProcessDetailById(req,res,'edit')
+});
+/**
+ * 注销
+ */
 router.get('/logout',checkLogin);
 router.get('/logout',function(req,res){
     req.session.user = null;
