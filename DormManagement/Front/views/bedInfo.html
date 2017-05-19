@@ -8,7 +8,7 @@
 		<link rel="shortcut icon" href="../img/favicon.ico" type="image/x-icon" />
 		<title>宿舍管理系统 - DMS</title>
 	</head>
-	<body id="bedInfo">
+	<body>
 		<div class="nav">
 			<div class="logo">宿舍管理系统</div>
 			<div class="user">
@@ -17,12 +17,12 @@
 				<span class="btn btn-red js-logout" style="margin-left: 10px">退出</span>
 			</div>
 		</div>
-		<div class="content">
+		<div class="content" id="bedInfo">
 			<div class="main-block large">
 				<div class="studentInfo-hd">
 					<!--<span class="back-arrow js-back"><strong>&#8678</strong></span>	-->
 					<span class="teacher-name"><strong>宿舍床位情况</strong></span>
-					<span class="student-count" >共 <i>{{ students.length }}</i> 个</span>
+					<span class="student-count" >共 <i>{{ bedInfos.length }}</i> 个</span>
 					<span style="margin-left: 60px">宿舍号：</span>
 					<input class="search-input" type="text" />
 					<span class="btn btn-blue">搜索</span>
@@ -38,7 +38,7 @@
 						<span class="btn btn-yellow js-addStudent">分配学生</span>
 						<span class="btn btn-orange js-addStudent">办理入住</span>
 						<span class="btn btn-blue js-edit">办理退宿</span>
-						<span class="btn btn-red js-clear">置为不可用</span>
+						<span class="btn btn-red js-clear">置为可用 / 不可用</span>
 					</div>
 				</div>
 				<div class="studentInfo-bd">
@@ -47,13 +47,13 @@
 							<tr>
 								<th style="width: 10px;"><input type="checkbox" class="js-selectAll"/></th>
 								<th style="width: 5%">楼号</th>
-								<th style="width: 5%;">宿舍号</th>
+								<th style="width: 7%;">宿舍号</th>
 								<th style="width: 5%">床位编号</th>
 								<th style="width: 5%">性别</th>
 								<th style="width: 8%">状态</th>
-								<th style="width: 6%">是否可用</th>
-								<th style="width: 5%">学生学号</th>
-								<th style="width: 6%">学生姓名</th>
+								<th style="width: 5%">是否可用</th>
+								<th style="width: 10%">学生学号</th>
+								<th style="width: 10%">学生姓名</th>
 <!--
 								<th style="width: 3%">家庭经济</th>
 								<th style="width: 2%">是否干部</th>
@@ -64,37 +64,20 @@
 							</tr>
 						</thead>
 						<tbody class="js-tbody">
-							<tr>	
+							<tr v-for="bedInfo in bedInfos" :data-id="bedInfo.id">
 								<td><input type="checkbox" class="js-selectOne" /></td>
-								<td>5</td>
-								<td>5214</td>
-								<td>1</td>
-								<td>女</td>
-								<td>已入住</td>
-								<td class="available"><strong>√</strong></td>
-								<td>1601210652</td>
-								<td>罗琳</td>
-							</tr>
-							<tr>	
-								<td><input type="checkbox" class="js-selectOne" /></td>
-								<td>5</td>
-								<td>5214</td>
-								<td>1</td>
-								<td>女</td>
-								<td>已入住</td>
-								<td class="unavailable"><strong>×</strong></td>
-								<td>1601210652</td>
-								<td>罗琳</td>
-							</tr>
-							<tr v-for="student in students" data-id="{{ student.id }}">
-								<td><input type="checkbox" class="js-selectOne" /></td>
-								<td class="js-studentId">{{ student.student_id }}</td>
-								<td>{{ student.student_name }}</td>
-								<td>{{ student.class }}</td>
-								<td>{{ student.dorm_id }}</td>
-								<td>{{ student.major }}</td>
-								<td>{{ student.origin }}</td>
-								<td>{{ student.party }}</td>
+								<td>{{ bedInfo.buildingNo }}</td>
+								<td>{{ bedInfo.roomNo }}</td>
+								<td>{{ bedInfo.bedNo}}</td>
+								<td v-if="bedInfo.sex == 0">女</td>
+								<td v-else>男</td>
+								<td v-if="bedInfo.status == 0">空床</td>
+								<td v-else-if="bedInfo.status == 1">已分配</td>
+								<td v-else>已入住</td>
+								<td v-if="bedInfo.usable == 1" class="available"><strong>√</strong></td>
+								<td v-else class="unavailable"><strong>×</strong></td>								
+								<td>{{ bedInfo.studentNo }}</td>
+								<td>{{ bedInfo.studentName }}</td>
 								<!--<td>{{ student.study }}</td>
 								<td>{{ student.family }}</td>
 								<td>{{ student.isleader }}</td>

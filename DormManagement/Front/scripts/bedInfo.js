@@ -1,5 +1,40 @@
 Zepto(function($){
 
+     var bedInfo_vm = new Vue({
+        el: '#bedInfo',
+        data: {
+            bedInfos: {}
+        },
+        methods: {
+
+        }
+    }); 
+
+    $.ajax({
+        type: 'POST',
+        url: 'http://localhost:4000/getBedInfo',
+        data: {
+
+        },
+        dataType: 'json',
+        success: function(data){
+            if (data.isConnect == false) {
+                alert('数据库连接失败！');
+            } else {
+                if (data.isSuccess == false) {
+                    alert('查询失败！');
+                } else {
+                    console.log(data)
+                    bedInfo_vm._data.bedInfos = data.bedInfos;
+                }
+            }
+        },
+        error: function(xhr, type){
+            console.log(xhr);
+            alert('Ajax error!')
+        }
+    });
+
     // 返回功能选择
     $('.js-func').on('click', function() {
         window.location.href = './chooseFunc.html';
@@ -37,36 +72,6 @@ Zepto(function($){
             alert('上传文件格式有误！');
         }
     })
-
-    var bedInfo_vm = new Vue({
-        el: '#bedInfo',
-        data: {
-            teacherInfo: teacherInfo,
-            students: {}
-        },
-        methods: {
-
-        }
-    }); 
-
-    $.ajax({
-        type: 'POST',
-        url: 'http://localhost:8888/getStudentInfo',
-        data: {
-            teacherId: teacherInfo.id,
-            name: teacherInfo.name,
-            school: teacherInfo.school
-        },
-        dataType: 'json',
-        success: function(data){
-            studentInfo_vm._data.students = data;
-        },
-        error: function(xhr, type){
-            console.log(xhr);
-            alert('Ajax error!')
-        }
-    });
-
 
     $('.js-back').on('click', function() {
         localStorage.removeItem('teacherInfo');

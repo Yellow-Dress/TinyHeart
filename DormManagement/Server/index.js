@@ -8,6 +8,10 @@ var mysql = require('mysql');
 var crypto = require('crypto');
 var fs = require('fs');
 var busboy = require('connect-busboy');
+var xlsx = require('xlsx');
+var log = require('./log.js');
+var async = require('async');
+var logPath = path.join(__dirname, 'dms.log');
 
 var app = express();
 
@@ -107,32 +111,189 @@ app.get('/getBedInfoTemplate', function(req, res) {
 });
 
 app.post('/uploadBedInfo', function(req, res) {
-    console.log('get the request')
     var fstream;
     req.pipe(req.busboy);
     req.busboy.on('file', function(fieldName, file, fileName) {
         console.log('Uploading:' + fileName);
 
-        var filePath = path.join(__dirname, 'upload/' + fileName),
-            targetPath = path.join(__dirname, 'upload/bedInfo.xlsx');
-        fstream = fs.createWriteStream(filePath);
+        // var filePath = path.join(__dirname, 'upload/' + fileName),
+        var targetPath = path.join(__dirname, 'upload/bedInfo.xlsx');
+       
+        fstream = fs.createWriteStream(targetPath);
 
         // 文件不存在，新建
-        if (fs.existsSync(filePath) == false) {
-            fs.mkdirSync(filePath);
-        }
+        // if (fs.existsSync(filePath) == false) {
+        //     fs.mkdirSync(filePath);
+        // }
+
+        // if (fs.existsSync(targetPath) == true) {
+        //     fs.unlinkSync(targetPath);
+        // } 
 
         file.pipe(fstream);
         fstream.on('close', function() {
             console.log('上传完毕');
-            fs.renameSync(filePath, targetPath, function(err, data) {
-                res.redirect('views/bedInfo.html');              
+            // fs.renameSync(filePath, targetPath, function(err, data) {
+            //     if (err) {
+            //         console.log(err);
+            //         // TODO: LOG
+            //     } else {
+            //         console.log('not err');
+            //         res.redirect('views/bedInfo.html');  
+            //     }   
+            // });
+            
+            // 清空日志
+            log.delete(logPath);
+
+            updateBedInfoByExcel(targetPath).then(function() {
+                res.redirect('views/bedInfo.html');
             });
-            res.redirect('views/bedInfo.html');
+            
         })
     })
 });
 
+app.post('/getBedInfo', function(req, res) {
+	var bedInfoQuerySql = "SELECT * FROM bed WHERE deleteBit=?",
+		bedInfoQuerySql_Params = [0];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(bedInfoQuerySql, bedInfoQuerySql_Params, function(err, result) {
+            if (err) {
+                console.log(err);
+                connection.release();
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+            
+            res.send( {isConnect: true, isSuccess: true, bedInfos: result} );
+
+        });
+    })    
+});
+
+function updateBedInfoByExcel(filePath) {
+    // 一条条读，读一条，验证成功以对象形式加入数组；一旦有一条不成功，清空数组，写入Log；
+    
+    // excel表格中全部读完后再修改数据库
+
+    // 如果已经存在记录（buildingNo+roomNo+bedNo），则删除后插入
+    // 如果没有，则新增
+    // 返回promise，完毕后执行
+    return new Promise(function(resolve, reject) {
+        var bedInfoArr = [];
+
+        var flag = true;
+
+        var recordCount = 1;
+
+        // utils.parseExcel(filePath).forEach(function(bedInfoObj) {
+        //     if (validateBedInfo(bedInfoObj)) {
+        //         bedInfoArr.push(bedInfoObj);
+        //     }
+        // }, function(err) {
+
+        // });
+        async.each(utils.parseExcel(filePath), function(bedInfoObj, callback) {
+            if (validateBedInfo(bedInfoObj, recordCount)) {
+                bedInfoArr.push(bedInfoObj);
+            } else {
+                flag = false;
+            }
+            recordCount++;
+        }, function(err) {
+            if (err) {
+                console.log(err);
+            } else {
+                if (flag) {
+                    // 插入数据库
+
+                }
+                // 记得看有没有异步
+                resolve();
+            }
+        })
+
+
+    })
+}
+
+function validateBedInfo(bedInfoObj, recordCount) {
+    var flag = true;
+
+    // 检测是否楼号为空
+    if (bedInfoObj['buildingNo'] == undefined) {
+        log.write(logPath, "第" + recordCount + "条记录缺少楼号。");
+        flag = false;
+    }
+
+    // 检测是否宿舍号为空
+    if (bedInfoObj['roomNo'] == undefined) {
+        log.write(logPath, "第" + recordCount + "条记录缺少宿舍号。");
+        flag = false;
+    } else {
+        // 根据不同楼号检测宿舍号的有效性
+        // 5号楼：4位数字；13号楼：F+4位数字；14号楼：E+4位数字
+        if (bedInfoObj['buildingNo'] != undefined) {
+            var re;
+            switch(bedInfoObj['buildingNo']) {
+                case 5:
+                    re = /^\d{4}$/;
+                    break;
+                case 13:
+                    re = /^F\d{4}$/;
+                    break;
+                case 14:
+                    re = /^E\d{4}$/;              
+                    break;
+            }
+
+            if (!re.test(bedInfoObj['roomNo'])) {
+                log.write(logPath, "第" + recordCount + "条记录宿舍号格式错误。");
+                flag = false;                     
+            }
+        }
+    }
+
+    if (bedInfoObj['bedNo'] == undefined) {
+        log.write(logPath, "第" + recordCount + "条记录缺少床位遍号。");
+        flag = false;
+    }
+
+    if (bedInfoObj['sex'] == undefined) {
+        log.write(logPath, "第" + recordCount + "条记录缺少性别信息。");
+        flag = false;
+    }
+
+    if (bedInfoObj['status'] == undefined) {
+        log.write(logPath, "第" + recordCount + "条记录缺少状态信息。");
+        flag = false;
+    }   
+
+    if (bedInfoObj['status'] == '已分配' || bedInfoObj['status'] == '已入住') {
+        if (bedInfoObj['studentNo'] == undefined) {
+            log.write(logPath, "第" + recordCount + "条记录缺少学生学号。");
+            flag = false;
+        } else {
+            var re = /^\d{10}$/;
+            if (!re.test(bedInfoObj['studentNo'])) {
+                log.write(logPath, "第" + recordCount + "条记录学生学号格式错误。");
+                flag = false;
+            }
+        }
+        if (bedInfoObj['studentName'] == undefined) {
+            log.write(logPath, "第" + recordCount + "条记录缺少学生姓名。");
+            flag = false;
+        }
+    }
+    
+    return flag;
+}
 
 app.listen(4000, function(req, res) {
     console.log('app is running at port 4000.');

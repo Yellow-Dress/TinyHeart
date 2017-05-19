@@ -475,7 +475,7 @@ $def_shadow_color: rgba(0, 0, 0, 0.5);
 
 .search-input {
   display: inline-block;
-  width: 150px;
+  width: 120px;
   height: 18px;
   padding: 4px;
   font-size: 14px;
@@ -489,5 +489,4 @@ $def_shadow_color: rgba(0, 0, 0, 0.5);
   -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
   -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
   transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
-  margin-left: 4px;
 }
