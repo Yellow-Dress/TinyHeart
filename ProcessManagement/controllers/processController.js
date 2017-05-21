@@ -1,4 +1,5 @@
 module.exports = {
+	pid: null,
 	getProcessList: function(req, res) {
 	    var allPosts = [];
 	    req.models.process.find({user_name:req.session.user.user_name})
@@ -17,6 +18,7 @@ module.exports = {
 	},
 	getProcessDetailById: function(req, res, from) {
 	    console.log(req.query.id);
+	    pid = req.query.id;
 	    req.models.process.findOne({id:req.query.id}).exec(function(err, process){
             console.log(process);
             var title = '流程修改';
@@ -71,5 +73,20 @@ module.exports = {
 		}
 		req.flash('success', '顺序调整成功!');
 	    res.json({type: judge});
+	},
+	updateProcess: function(req,res){
+		var judge = 1;
+		console.log(req.body.content);
+		console.log(req.body.title);
+		console.log(req.query.id);
+		req.models.process.update({id:pid},{title:req.body.title,content:req.body.content}).exec(function(err,result){
+            if (err) {
+                req.flash('error', err);
+                console.log('error'+err);
+                judge = 0;
+            }
+            req.flash('success', '修改成功!');
+            res.json({type: judge});
+        });
 	}
 }

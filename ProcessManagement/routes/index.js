@@ -100,6 +100,11 @@ router.get('/edit',checkLogin);
 router.get('/edit*',function(req,res) {
     ProcessController.getProcessDetailById(req,res,'edit')
 });
+/*
+ * 更新流程
+ */
+router.post('/editProcess', checkLogin);
+router.post('/editProcess',ProcessController.updateProcess);
 /**
  * 注销
  */
