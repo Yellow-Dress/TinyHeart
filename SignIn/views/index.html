@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<!-- saved from url=(0038)http://v3.bootcss.com/examples/signin/ -->
+<html lang="zh-CN">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="http://v3.bootcss.com/favicon.ico">
+    <title>签到</title>
+    <!-- Bootstrap core CSS -->
+    <link href="stylesheets/bootstrap.min.css" rel="stylesheet">
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="stylesheets/ie10-viewport-bug-workaround.css" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <link href="stylesheets/signin.css" rel="stylesheet">
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <script src="javascripts/ie-emulation-modes-warning.js"></script>
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+    <div class="container">
+        <form class="form-signin" method="post">
+            <h2 class="form-signin-heading">签到</h2>
+            <label for="inputEmail" class="sr-only">姓名</label>
+            <input type="text" id="inputName" name="name" class="form-control" placeholder="姓名" required="" autofocus="">
+            <label for="inputPassword" class="sr-only">学号</label>
+            <input type="number" id="inputID" name="id" class="form-control" placeholder="学号" required="">
+            <br/>
+            <button class="btn btn-lg btn-primary btn-block" type="button" onclick="signIn()">确认签到</button>
+            <br/>
+            <div id="tips" class="label label-danger" display="none"></div>
+            <br/><br/>
+            <div>
+                纬度：<span id="latitude" class="label label-warning"></span>
+                &nbsp;&nbsp;&nbsp;&nbsp;
+                经度：<span id="longitude" class="label label-success"></span>
+            </div>
+            
+           
+        </form>
+    </div>
+    <!-- /container -->
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="javascripts/ie10-viewport-bug-workaround.js"></script>
+    <script src="javascripts/jquery-1.8.3.min.js"></script>
+    <script src="javascripts/signin.js"></script>
+   <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+   <script type="text/javascript">
+        //$('#latitude').html('latitude');
+        var signature = '<%=signature%>';
+        var timestamp = <%=timestamp%>;
+        var nonceStr = '<%=nonceStr%>';
+        wx.config({
+            debug: true, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+            appId: 'wx00b2e3c441296c24', // 必填，公众号的唯一标识
+            timestamp: timestamp, // 必填，生成签名的时间戳
+            nonceStr: nonceStr, // 必填，生成签名的随机串
+            signature: signature,// 必填，签名，见附录1
+            jsApiList: ['getLocation'] // 必填，需要使用的JS接口列表，所有JS接口列表见附录2
+        });
+
+
+        wx.ready(function(){
+          wx.getLocation({
+            type: 'wgs84', // 默认为wgs84的gps坐标，如果要返回直接给openLocation用的火星坐标，可传入'gcj02'
+            success: function (res) {
+                var latitude = res.latitude; // 纬度，浮点数，范围为90 ~ -90
+                var longitude = res.longitude; // 经度，浮点数，范围为180 ~ -180。
+                var speed = res.speed; // 速度，以米/每秒计
+                var accuracy = res.accuracy; // 位置精度
+                console.log(latitude);
+                $('#latitude').html(latitude);
+                $('#longitude').html(longitude);
+            }
+          });
+            // config信息验证后会执行ready方法，所有接口调用都必须在config接口获得结果之后，config是一个客户端的异步操作，所以如果需要在页面加载时就调用相关接口，则须把相关接口放在ready函数中调用来确保正确执行。对于用户触发时才调用的接口，则可以直接调用，不需要放在ready函数中。
+        });
+
+        wx.error(function (res) {  
+          alert("调用微信jsapi返回的状态:"+res.errMsg);  
+        });  
+   </script>
+</body>
+
+</html>
