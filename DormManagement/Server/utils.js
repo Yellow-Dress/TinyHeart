@@ -74,6 +74,24 @@ module.exports = {
                     break;
                 case 'studentName':
                     value = (value + '').trim();
+                    break;
+                case 'sex':
+                    if (value == '男') {
+                        value = 1;
+                    } else if (value == '女') {
+                        value = 0;
+                    }                        
+                    break;
+                case 'status':
+                    if (value == '空床') {
+                        value = 0;
+                    } else if (value == '已分配') {
+                        value = 1;
+                    } else if (value == '已入住') {
+                        value = 2;
+                    }
+                    break;
+                        
             }
             data[row][headers[col]] = value;
         })

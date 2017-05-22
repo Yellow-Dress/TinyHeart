@@ -116,32 +116,13 @@ app.post('/uploadBedInfo', function(req, res) {
     req.busboy.on('file', function(fieldName, file, fileName) {
         console.log('Uploading:' + fileName);
 
-        // var filePath = path.join(__dirname, 'upload/' + fileName),
         var targetPath = path.join(__dirname, 'upload/bedInfo.xlsx');
        
         fstream = fs.createWriteStream(targetPath);
 
-        // 文件不存在，新建
-        // if (fs.existsSync(filePath) == false) {
-        //     fs.mkdirSync(filePath);
-        // }
-
-        // if (fs.existsSync(targetPath) == true) {
-        //     fs.unlinkSync(targetPath);
-        // } 
-
         file.pipe(fstream);
         fstream.on('close', function() {
             console.log('上传完毕');
-            // fs.renameSync(filePath, targetPath, function(err, data) {
-            //     if (err) {
-            //         console.log(err);
-            //         // TODO: LOG
-            //     } else {
-            //         console.log('not err');
-            //         res.redirect('views/bedInfo.html');  
-            //     }   
-            // });
             
             // 清空日志
             log.delete(logPath);
@@ -188,17 +169,12 @@ function updateBedInfoByExcel(filePath) {
     return new Promise(function(resolve, reject) {
         var bedInfoArr = [];
 
+        var resolveFunc = resolve;
+
         var flag = true;
 
         var recordCount = 1;
-
-        // utils.parseExcel(filePath).forEach(function(bedInfoObj) {
-        //     if (validateBedInfo(bedInfoObj)) {
-        //         bedInfoArr.push(bedInfoObj);
-        //     }
-        // }, function(err) {
-
-        // });
+        
         async.each(utils.parseExcel(filePath), function(bedInfoObj, callback) {
             if (validateBedInfo(bedInfoObj, recordCount)) {
                 bedInfoArr.push(bedInfoObj);
@@ -206,20 +182,98 @@ function updateBedInfoByExcel(filePath) {
                 flag = false;
             }
             recordCount++;
+            // TODO没执行callback
+            callback();
         }, function(err) {
             if (err) {
                 console.log(err);
             } else {
+                // 如果有不合格记录，则全部不更新
                 if (flag) {
                     // 插入数据库
+                    async.eachSeries(utils.parseExcel(filePath), function(bedInfoObj, callback) {
+                        try {
+                            var bedInfoQuerySql = "SELECT * FROM bed WHERE buildingNo=? AND roomNo=? AND bedNo=?",
+                                bedInfoQuerySql_Params = [bedInfoObj['buildingNo'], bedInfoObj['roomNo'], bedInfoObj['bedNo']];
 
+                
+                            sqlPool.getConnection(function(err, connection) {
+                                if (err) {
+                                    console.log(err);
+                                    callback(err);
+                                }
+
+                                var sqlQuery = connection.query(bedInfoQuerySql, bedInfoQuerySql_Params, function(err, result) {
+                                    if (err) {
+                                        console.log(err);
+                                        connection.release();
+                                        callback(err);
+                                    }
+                                
+                                    if (result.length > 0) {
+                                        // 该床位已有记录，则修改
+                                        console.log(bedInfoObj);
+
+                                        var bedInfoUpdateSql = "UPDATE bed SET sex=?, status=?, studentNo=?, studentName=?, deleteBit=? WHERE buildingNo=? AND roomNo=? AND bedNo=?",
+                                            bedInfoUpdateSql_Params = [bedInfoObj['sex'], bedInfoObj['status'], bedInfoObj['studentNo'], bedInfoObj['studentName'], 0, bedInfoObj['buildingNo'], bedInfoObj['roomNo'], bedInfoObj['bedNo']];                                    
+                                    
+                                        sqlPool.getConnection(function(err, connection) {
+                                            if (err) {
+                                                console.log(err);
+                                                callback(err);
+                                            }
+
+                                            var sqlQuery = connection.query(bedInfoUpdateSql, bedInfoUpdateSql_Params, function(err, result) {
+                                                if (err) {
+                                                    console.log(err);
+                                                    connection.release();
+                                                    callback(err);
+                                                }
+
+                                                callback();
+                                            })
+                                        });
+                                        
+                                    } else {
+                                        // 没有该床位记录，则插入
+                                        var bedInfoInsertSql = "INSERT INTO bed(buildingNo, roomNo, bedNo, sex, status, studentNo, studentName) VALUES(?, ?, ?, ?, ?, ?, ?)",
+                                            bedInfoInsertSql_Params = [bedInfoObj['buildingNo'], bedInfoObj['roomNo'], bedInfoObj['bedNo'], bedInfoObj['sex'], bedInfoObj['status'], bedInfoObj['studentNo'], bedInfoObj['studentName']];                                    
+                                        
+                                        sqlPool.getConnection(function(err, connection) {
+                                            if (err) {
+                                                console.log(err);
+                                                callback(err);
+                                            }
+
+                                            var sqlQuery = connection.query(bedInfoInsertSql, bedInfoInsertSql_Params, function(err, result) {
+                                                if (err) {
+                                                    console.log(err);
+                                                    connection.release();
+                                                    callback(err);
+                                                }
+
+                                                callback();
+                                            })
+                                        });
+                                    }
+                                });
+                            });
+
+                        } catch(e) {
+                            console.log(e);
+                        }
+                    }, function(err) {
+                        if (err) {
+                            console.log(err);
+                        }
+                        resolveFunc();
+                    });
+
+                } else {
+                    resolveFunc();
                 }
-                // 记得看有没有异步
-                resolve();
             }
         })
-
-
     })
 }
 
@@ -290,8 +344,13 @@ function validateBedInfo(bedInfoObj, recordCount) {
             log.write(logPath, "第" + recordCount + "条记录缺少学生姓名。");
             flag = false;
         }
+    } else {
+        if (bedInfoObj['studentNo'] != undefined || bedInfoObj['studentName'] != undefined) {
+            log.write(logPath, "第" + recordCount + "条记录不应有学生信息。");
+            flag = false;
+        }
     }
-    
+
     return flag;
 }
 

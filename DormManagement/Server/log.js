@@ -19,3 +19,15 @@ module.exports.write = function(filePath, msg) {
     // 追加写
     fs.writeFileSync(filePath, msg + '\n', { flag: 'a+'});
 }
+
+module.exports.hasContent = function(filePath) {
+    if (fs.existsSync(filePath) == true) {
+        if (fs.readFileSync(filePath, 'utf-8').length != 0) {
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+}
