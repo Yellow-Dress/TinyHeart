@@ -64,7 +64,7 @@
                           <td>查看</td>
                           <td>
                             <a href="/edit?id=<%= post.id %>" target="_blank"><button type="button" class="btn btn-success btn-xs"> 修 改 </button></a> &nbsp;
-                            <button type="button" class="btn btn-danger btn-xs"> 删 除 </button> &nbsp;
+                            <button type="button" class="btn btn-danger btn-xs" onclick="deleteProcess(<%= post.id %>)"> 删 除 </button> &nbsp;
                            
                           </td>
                         </tr>

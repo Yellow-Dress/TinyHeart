@@ -23,7 +23,7 @@ function adjustFin() {
          dataType: "json",
          success: function(data){
             window.location.href = '/home'
-            }
+        }
      });
 }
 
@@ -46,4 +46,20 @@ function down(obj) {
     if (nextTR.length > 0) {
         nextTR.insertBefore(objParentTR);
     }
+}
+
+function deleteProcess(id){
+    var data = {
+        'id': id
+    };
+    $.ajax({
+        type : 'post',
+        url : '/deleteProcess',
+        data : JSON.stringify(data),
+        contentType: 'application/json; charset=utf-8',
+        dataType: "json",
+        success: function(data){
+            window.location.href = '/home'
+        }
+    })
 }

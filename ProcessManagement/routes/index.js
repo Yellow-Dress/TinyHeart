@@ -105,6 +105,9 @@ router.get('/edit*',function(req,res) {
  */
 router.post('/editProcess', checkLogin);
 router.post('/editProcess',ProcessController.updateProcess);
+
+router.post('/deleteProcess',checkLogin);
+router.post('/deleteProcess',ProcessController.deleteProcess);
 /**
  * 注销
  */

@@ -18,7 +18,7 @@ module.exports = {
 	},
 	getProcessDetailById: function(req, res, from) {
 	    console.log(req.query.id);
-	    pid = req.query.id;
+	    
 	    req.models.process.findOne({id:req.query.id}).exec(function(err, process){
             console.log(process);
             var title = '流程修改';
@@ -27,7 +27,7 @@ module.exports = {
 	        }
 	        if(from == 'detail'){
 	        	title = '流程详情';
-	        }
+	        }else pid = req.query.id;
             res.render(from, { 
 	            title: title, 
 	            user: req.session.user,
@@ -76,9 +76,6 @@ module.exports = {
 	},
 	updateProcess: function(req,res){
 		var judge = 1;
-		console.log(req.body.content);
-		console.log(req.body.title);
-		console.log(req.query.id);
 		req.models.process.update({id:pid},{title:req.body.title,content:req.body.content}).exec(function(err,result){
             if (err) {
                 req.flash('error', err);
@@ -88,5 +85,17 @@ module.exports = {
             req.flash('success', '修改成功!');
             res.json({type: judge});
         });
+	},
+	deleteProcess: function(req,res){
+		req.models.process.destroy({id:req.body.id}).exec(function(err,result){
+			var judge = 1;
+			if (err) {
+                req.flash('error', err);
+                console.log('error'+err);
+                judge = 0;
+            }
+            req.flash('success', '删除成功!');
+            res.json({type: judge});
+		});
 	}
 }
