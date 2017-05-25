@@ -47,10 +47,17 @@ var sqlPool = mysql.createPool({
     database: 'dms'
 });
 
-app.get('/', utils.checkLogin);
-
 app.get('/', function(req, res) {
-    res.render('views/index.html');
+    res.redirect('views/index.html');
+});
+
+app.post('/checkLogin', function(req, res) {
+    if (!req.session.user) {
+        console.log('未登录！');
+        res.send( {isSuccess: false} );
+    } else {
+        res.send( {isSuccess: true} );
+    }
 });
 
 app.post('/login', function(req, res) {
@@ -91,7 +98,7 @@ app.post('/login', function(req, res) {
 });
 
 app.get('/getBedInfoTemplate', function(req, res) {
-    var fileName = 'template.xlsx',
+    var fileName = 'BedTemplate.xlsx',
         filePath = path.join(__dirname, 'download/' + fileName);
         console.log(filePath);
         try {
@@ -156,6 +163,247 @@ app.post('/getBedInfo', function(req, res) {
 
         });
     })    
+});
+
+app.post('/getErrorMsg', function(req, res) {
+    if (log.hasContent(logPath)) {
+        res.send({ hasContent: true, errorMsg: log.read(logPath)});
+    } else {
+        res.send({ hasContent: false });
+    }
+});
+
+app.post('/logout', function(req, res) {
+    delete req.session.user;
+    res.send({ isSuccess: true });
+});
+
+app.post('/checkin', function(req, res) {
+    var buildingNo = req.body.buildingNo,
+        roomNo = req.body.roomNo,
+        bedNo = req.body.bedNo;
+
+    var bedInfoQuerySql = "SELECT * FROM bed WHERE buildingNo=? AND roomNo=? AND bedNo=?",
+        bedInfoQuerySql_Params = [buildingNo, roomNo, bedNo];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(bedInfoQuerySql, bedInfoQuerySql_Params, function(err, result) {
+            if (err) {
+                console.log(err);
+                connection.release();
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+        
+            if (result.length > 0) {
+                var bedInfoObj = result[0];
+
+                if (bedInfoObj['status'] != 1) {
+                    if (bedInfoObj['status'] == 0) {
+                        res.send( {isConnect: true, isSuccess: false, errorMsg: '未分配学生不可办理入住！'} );
+                    } else if (bedInfoObj['status'] == 2) {
+                        res.send( {isConnect: true, isSuccess: false, errorMsg: '该床位已有同学入住！'} );
+                    }
+                } else if (bedInfoObj['studentNo'] == undefined || bedInfoObj['studentName'] == undefined){
+                    res.send( {isConnect: true, isSuccess: false, errorMsg: '分配学生信息不完整！请重新分配。'} );
+                } else {
+                    var bedInfoUpdateSql = "UPDATE bed SET status=? WHERE buildingNo=? AND roomNo=? AND bedNo=?",
+                        bedInfoUpdateSql_Params = [2, bedInfoObj['buildingNo'], bedInfoObj['roomNo'], bedInfoObj['bedNo']];
+
+                    sqlPool.getConnection(function(err, connection) {
+                        if (err) {
+                            console.log(err);
+                            res.send( {isConnect: false, isSuccess: false} );
+                        }
+
+                        var sqlQuery = connection.query(bedInfoUpdateSql, bedInfoUpdateSql_Params, function(err, result) {
+                            if (err) {
+                                console.log(err);
+                                connection.release();
+                                res.send( {isConnect: true, isSuccess: false} );
+                            }
+                            
+                            res.send( {isConnect: true, isSuccess: true} );
+
+                        });
+                    });
+                }
+            } else {
+                res.send( {isConnect: true, isSuccess: false, errorMsg: '床位信息错误，请检查楼号、宿舍号、床号。'} );
+            }
+        });
+    });    
+});
+
+app.post('/checkout', function(req, res) {
+    var buildingNo = req.body.buildingNo,
+        roomNo = req.body.roomNo,
+        bedNo = req.body.bedNo;
+
+    var bedInfoQuerySql = "SELECT * FROM bed WHERE buildingNo=? AND roomNo=? AND bedNo=?",
+        bedInfoQuerySql_Params = [buildingNo, roomNo, bedNo];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(bedInfoQuerySql, bedInfoQuerySql_Params, function(err, result) {
+            if (err) {
+                console.log(err);
+                connection.release();
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+        
+            if (result.length > 0) {
+                var bedInfoObj = result[0];
+
+                if (bedInfoObj['status'] == 0) {
+                    res.send( {isConnect: true, isSuccess: false, errorMsg: '未分配学生不可办理退宿！'} );
+                } else if (bedInfoObj['studentNo'] == undefined || bedInfoObj['studentName'] == undefined){
+                    res.send( {isConnect: true, isSuccess: false, errorMsg: '分配学生信息不完整！请先重新分配。'} );
+                } else {
+                    var bedInfoUpdateSql = "UPDATE bed SET status=?, studentNo=?, studentName=? WHERE buildingNo=? AND roomNo=? AND bedNo=?",
+                        bedInfoUpdateSql_Params = [0, null, null, bedInfoObj['buildingNo'], bedInfoObj['roomNo'], bedInfoObj['bedNo']];
+
+                    sqlPool.getConnection(function(err, connection) {
+                        if (err) {
+                            console.log(err);
+                            res.send( {isConnect: false, isSuccess: false} );
+                        }
+
+                        var sqlQuery = connection.query(bedInfoUpdateSql, bedInfoUpdateSql_Params, function(err, result) {
+                            if (err) {
+                                console.log(err);
+                                connection.release();
+                                res.send( {isConnect: true, isSuccess: false} );
+                            }
+                            
+                            res.send( {isConnect: true, isSuccess: true} );
+
+                        });
+                    });
+                }
+            } else {
+                res.send( {isConnect: true, isSuccess: false, errorMsg: '床位信息错误，请检查楼号、宿舍号、床号。'} );
+            }
+        });
+    });    
+});
+
+app.post('/usable',  function(req, res) {
+    var buildingNo = req.body.buildingNo,
+        roomNo = req.body.roomNo,
+        bedNo = req.body.bedNo;
+
+    var bedInfoQuerySql = "SELECT * FROM bed WHERE buildingNo=? AND roomNo=? AND bedNo=?",
+        bedInfoQuerySql_Params = [buildingNo, roomNo, bedNo];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(bedInfoQuerySql, bedInfoQuerySql_Params, function(err, result) {
+            if (err) {
+                console.log(err);
+                connection.release();
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+        
+            if (result.length > 0) {
+                var bedInfoObj = result[0];
+
+                var bedInfoUpdateSql = "UPDATE bed SET usable=? WHERE buildingNo=? AND roomNo=? AND bedNo=?",
+                    bedInfoUpdateSql_Params = [bedInfoObj['usable'] ^ 1, bedInfoObj['buildingNo'], bedInfoObj['roomNo'], bedInfoObj['bedNo']];
+
+                sqlPool.getConnection(function(err, connection) {
+                    if (err) {
+                        console.log(err);
+                        res.send( {isConnect: false, isSuccess: false} );
+                    }
+
+                    var sqlQuery = connection.query(bedInfoUpdateSql, bedInfoUpdateSql_Params, function(err, result) {
+                        if (err) {
+                            console.log(err);
+                            connection.release();
+                            res.send( {isConnect: true, isSuccess: false} );
+                        }
+                        
+                        res.send( {isConnect: true, isSuccess: true} );
+
+                    });
+                });
+              
+            } else {
+                res.send( {isConnect: true, isSuccess: false, errorMsg: '床位信息错误，请检查楼号、宿舍号、床号。'} );
+            }
+        });
+    });      
+});
+
+app.post('/distribute', function(req, res) {
+    var buildingNo = req.body.buildingNo,
+        roomNo = req.body.roomNo,
+        bedNo = req.body.bedNo,
+        studentName = req.body.studentName,
+        studentNo = req.body.studentNo;
+
+    var bedInfoQuerySql = "SELECT * FROM bed WHERE buildingNo=? AND roomNo=? AND bedNo=?",
+        bedInfoQuerySql_Params = [buildingNo, roomNo, bedNo];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(bedInfoQuerySql, bedInfoQuerySql_Params, function(err, result) {
+            if (err) {
+                console.log(err);
+                connection.release();
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+        
+            if (result.length > 0) {
+                var bedInfoObj = result[0];
+
+                if (bedInfoObj['status'] != 0) {
+                    res.send( {isConnect: true, isSuccess: false, errorMsg: '只有空床状态才可以分配学生！'} );
+                }
+
+                var bedInfoUpdateSql = "UPDATE bed SET status=?, studentNo=?, studentName=? WHERE buildingNo=? AND roomNo=? AND bedNo=?",
+                    bedInfoUpdateSql_Params = [1, studentNo, studentName, bedInfoObj['buildingNo'], bedInfoObj['roomNo'], bedInfoObj['bedNo']];
+
+                sqlPool.getConnection(function(err, connection) {
+                    if (err) {
+                        console.log(err);
+                        res.send( {isConnect: false, isSuccess: false} );
+                    }
+
+                    var sqlQuery = connection.query(bedInfoUpdateSql, bedInfoUpdateSql_Params, function(err, result) {
+                        if (err) {
+                            console.log(err);
+                            connection.release();
+                            res.send( {isConnect: true, isSuccess: false} );
+                        }
+                        
+                        res.send( {isConnect: true, isSuccess: true} );
+
+                    });
+                });
+              
+            } else {
+                res.send( {isConnect: true, isSuccess: false, errorMsg: '床位信息错误，请检查楼号、宿舍号、床号。'} );
+            }
+        });
+    });  
 });
 
 function updateBedInfoByExcel(filePath) {

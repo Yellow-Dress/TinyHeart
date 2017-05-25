@@ -378,7 +378,7 @@ $def_shadow_color: rgba(0, 0, 0, 0.5);
  
 		&.student {
 			width: 560px;
-			height: 720px;
+			height: 160px;
 
 			.row {
 				width: 100%;
@@ -404,10 +404,17 @@ $def_shadow_color: rgba(0, 0, 0, 0.5);
 				-webkit-box-sizing:border-box;   
 				-moz-box-sizing: border-box;  
 				.text {
+					display: inline-block;
 					margin-bottom: 8px;
+					width: 20%;
 				}
 		
-				input {
+				.input {
+					display: inline-block;
+					width: 75%;
+				}
+
+				input {	
 					box-sizing: border-box;   
 					-webkit-box-sizing:border-box;   
 					-moz-box-sizing: border-box;  

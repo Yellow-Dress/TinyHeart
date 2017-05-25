@@ -3,7 +3,8 @@ Zepto(function($){
      var bedInfo_vm = new Vue({
         el: '#bedInfo',
         data: {
-            bedInfos: {}
+            bedInfos: {},
+            bedInfosBackup: {}
         },
         methods: {
 
@@ -12,21 +13,52 @@ Zepto(function($){
 
     $.ajax({
         type: 'POST',
-        url: 'http://localhost:4000/getBedInfo',
-        data: {
-
-        },
-        dataType: 'json',
+        url: 'http://localhost:4000/checkLogin',
         success: function(data){
-            if (data.isConnect == false) {
-                alert('数据库连接失败！');
+            console.log(data)
+            if (data.isSuccess == true) {
+                $.ajax({
+                    type: 'POST',
+                    url: 'http://localhost:4000/getErrorMsg',
+                    dataType: 'json',
+                    success: function(data){
+                        if (data.hasContent == true) {
+                            alert(data.errorMsg);
+                        }
+                    },
+                    error: function(xhr, type){
+                        console.log(xhr);
+                        alert('Ajax error!')
+                    }
+                });
+
+                $.ajax({  
+                    type: 'POST',
+                    url: 'http://localhost:4000/getBedInfo',
+                    data: {
+
+                    },
+                    dataType: 'json',
+                    success: function(data){
+                        if (data.isConnect == false) {
+                            alert('数据库连接失败！');
+                        } else {
+                            if (data.isSuccess == false) {
+                                alert('查询失败！');
+                            } else {
+                                console.log(data)
+                                bedInfo_vm._data.bedInfos = data.bedInfos;
+                                bedInfo_vm._data.bedInfosBackup = data.bedInfos;                               
+                            }
+                        }
+                    },
+                    error: function(xhr, type){
+                        console.log(xhr);
+                        alert('Ajax error!')
+                    }
+                });
             } else {
-                if (data.isSuccess == false) {
-                    alert('查询失败！');
-                } else {
-                    console.log(data)
-                    bedInfo_vm._data.bedInfos = data.bedInfos;
-                }
+                window.location.href = './index.html';
             }
         },
         error: function(xhr, type){
@@ -35,6 +67,8 @@ Zepto(function($){
         }
     });
 
+
+
     // 返回功能选择
     $('.js-func').on('click', function() {
         window.location.href = './chooseFunc.html';
@@ -42,11 +76,31 @@ Zepto(function($){
 
     // 注销并退出
     $('.js-logout').on('click', function() {
-
+        var logoutCheck = confirm("确认退出吗？");
+        if (logoutCheck == true) {
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:4000/logout',
+                dataType: 'json',
+                success: function(data){
+                    if (data.isSuccess == true) {
+                        window.location.href = './index.html';
+                    } else {
+                        alert('注销失败，请重试！');
+                    }
+                },
+                error: function(xhr, type){
+                    console.log(xhr);
+                    alert('Ajax error!')
+                }
+            });    
+        }
     });
 
+    // 冒泡捕获
     $('.js-tbody').on('click', function(e) {
         if (e.target.tagName == 'TD') {
+            cancelChecked();
             $(e.target).parents('tr').find('.js-selectOne')[0].checked ? 
                 $(e.target).parents('tr').find('.js-selectOne')[0].checked = false :
                 $(e.target).parents('tr').find('.js-selectOne')[0].checked = 'checked';
@@ -55,6 +109,7 @@ Zepto(function($){
         
     })
 
+    // 上传要导入的excel文件
     $('.js-upload').on('click', function(e) {
         e.preventDefault();
 
@@ -73,296 +128,377 @@ Zepto(function($){
         }
     })
 
-    $('.js-back').on('click', function() {
-        localStorage.removeItem('teacherInfo');
-        window.location.href = './teacherInfo.html';
-    });
-
-    $('.js-excel').on('click', function() {
-        if (studentInfo_vm._data.students.length > 0) {
-            alert('请先清空数据再进行excel导入，避免重复！');
-            return;
-        }
-
-        $.ajax({
-            type: 'POST',
-            url: 'http://localhost:8888/importExcel',
-            data: {
-                teacherInfo: JSON.stringify(teacherInfo)
-            },
-            dataType: 'json',
-            success: function(data){
-                console.log(data)
-                if (data.isSuccess == true) {
-                    alert("导入成功！");
-                } else if (data.hasFile == false){
-                    alert("未找到对应的Excel表格")
-                } else {
-                    alert("导入失败，请检查excel表中数据（是否有学号重复），清空后重试！")
-                }
-                window.location.href = './studentInfo.html';
-            },
-            error: function(xhr, type){
-                console.log(xhr);
-                alert('Ajax error!')
-                window.location.href = "./studentInfo.html";
-            }
-        });
-    });
-
-    $('.js-clear').on('click', function() {
-        if (studentInfo_vm._data.students.length <= 0) {
-            alert('无数据需要清空');
-            return;
-        }
-
-        var checkQuestion = confirm("确认清空吗？");
-        if (checkQuestion == true) {
-             $.ajax({
-                type: 'POST',
-                url: 'http://localhost:8888/clearStudentInfo',
-                data: {
-                    teacherId: teacherInfo.id
-                },
-                dataType: 'json',
-                success: function(data){
-                    if (data.isSuccess == true) {
-                        alert('成功清空！');
-                        window.location.href = './studentInfo.html';
-                    } else {
-                        alert('清空失败，请重试！');
-                    }
-                },
-                error: function(xhr, type){
-                    console.log(xhr);
-                    alert('Ajax error!')
-                }
-            });
-        } else {
-
-        }
-    });
-
-    $('.js-delete').on('click', function() {
+    $('.js-checkin').on('click', function() {
         var checkboxs = $('.js-selectOne').filter(function() {
             return this.checked == true;
         })
 
-        if (checkboxs.length <= 0) {
-            alert("您未选中至少一个学生！");
+        if (checkboxs.length == 0) {
+            alert("请选择一个学生！");
             return;
         }
 
-        var ids = [],
-            data = {};
-
-        checkboxs.each(function() {
-            ids.push($(this).parents('tr').data('id'));
-        });
+        if (checkboxs.length > 1) {
+            alert("只能选择一个学生！");
+            return;
+        }
         
-        data.ids = JSON.stringify(ids);
-        console.log(data)
-        var checkQuestion = confirm("确认删除吗？");
-        if (checkQuestion == true) {
+        var bedInfoBlock = $(checkboxs[0]).parents('tr');
+
+        var checkinCheck = confirm('确认办理入住吗？');
+        if (checkinCheck == true) {
+            // 校验是否能办理入住
+            var index = bedInfoBlock.data('index'),
+                bedInfoObj = bedInfo_vm._data.bedInfos[index];
+            
+            if (bedInfoObj.status == 0) {
+                alert('未分配学生不可办理入住！');
+                return;
+            }
+
+            if (bedInfoObj.status == 2) {
+                alert('该床位已有同学入住！');
+                return;
+            }
+
+            if (bedInfoObj.studentName == undefined || bedInfoObj.studentNo == undefined) {
+                alert('分配学生信息不完整！请先重新分配');
+                return;
+            }
+
             $.ajax({
                 type: 'POST',
-                url: 'http://localhost:8888/deleteStudent',
-                data: data,
+                url: 'http://localhost:4000/checkin',
+                data: bedInfoObj,
                 dataType: 'json',
                 success: function(data){
-                    if (data.isSuccess == true) {
-                        alert('删除成功！');
-                        window.location.href = './studentInfo.html';
+                    if (data.isConnect == false) {
+                        alert('数据库连接失败！');
                     } else {
-                        alert('添加失败，请重试！');
+                        if (data.isSuccess == false) {
+                            if (data['errorMsg'] != undefined) {
+                                alert(data['errorMsg']);
+                            } else {
+                                alert('办理入住失败！');
+                            }              
+                        } else {
+                            bedInfoObj.status = 2;
+                            bedInfo_vm._data.bedInfos[index] = bedInfoObj;
+                            alert('已成功办理入住！');
+                            cancelChecked();
+                        }
                     }
                 },
                 error: function(xhr, type){
                     console.log(xhr);
                     alert('Ajax error!')
                 }
-            });
+            });            
         }
+    })
+
+    $('.js-checkout').on('click', function() {
+        var checkboxs = $('.js-selectOne').filter(function() {
+            return this.checked == true;
+        })
+
+        if (checkboxs.length == 0) {
+            alert("请选择一个学生！");
+            return;
+        }
+
+        if (checkboxs.length > 1) {
+            alert("只能选择一个学生！");
+            return;
+        }
+        
+        var bedInfoBlock = $(checkboxs[0]).parents('tr');
+
+        var checkoutCheck = confirm('确认办理退宿吗？');
+        if (checkoutCheck == true) {
+            // 校验是否能办理退宿
+            var index = bedInfoBlock.data('index'),
+                bedInfoObj = bedInfo_vm._data.bedInfos[index];
+            
+            // status为1或2才可以办理退宿
+            if (bedInfoObj.status == 0) {
+                alert('未分配学生不可办理退宿！');
+                return;
+            }
+
+            if (bedInfoObj.studentName == undefined || bedInfoObj.studentNo == undefined) {
+                alert('分配学生信息不完整！请先重新分配');
+                return;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:4000/checkout',
+                data: bedInfoObj,
+                dataType: 'json',
+                success: function(data){
+                    if (data.isConnect == false) {
+                        alert('数据库连接失败！');
+                    } else {
+                        if (data.isSuccess == false) {
+                            if (data['errorMsg'] != undefined) {
+                                alert(data['errorMsg']);
+                            } else {
+                                alert('办理退宿失败！');
+                            }              
+                        } else {
+                            bedInfoObj.status = 0;
+                            bedInfoObj.studentNo = undefined;
+                            bedInfoObj.studentName = undefined;
+                            bedInfo_vm._data.bedInfos[index] = bedInfoObj;
+                            alert('已成功办理退宿！');
+                            cancelChecked();
+                        }
+                    }
+                },
+                error: function(xhr, type){
+                    console.log(xhr);
+                    alert('Ajax error!')
+                }
+            });            
+        }        
     });
 
-    $('.js-selectAll').on('click', function() {
-        if ($(this).hasClass('js-all')) {
-            $('.js-selectOne').each(function() {
-                this.checked = false;
-            });
-            $(this).removeClass('js-all');
+    $('.js-usable').on('click', function() {
+        var checkboxs = $('.js-selectOne').filter(function() {
+            return this.checked == true;
+        })
+
+        if (checkboxs.length == 0) {
+            alert("请选择一个学生！");
+            return;
+        }
+
+        if (checkboxs.length > 1) {
+            alert("只能选择一个学生！");
+            return;
+        }
+        
+        var bedInfoBlock = $(checkboxs[0]).parents('tr');
+
+        var index = bedInfoBlock.data('index'),
+            bedInfoObj = bedInfo_vm._data.bedInfos[index],
+            usableCheck;
+        
+        if (bedInfoObj.usable == 1) {
+            usableCheck = confirm('确认置为不可用吗？');
         } else {
-            $('.js-selectOne').each(function() {
-                this.checked = true;
-            });
-            $(this).addClass('js-all');
+            usableCheck = confirm('确认置为可用吗？');
+        }
+
+        if (usableCheck == true) {
+            $.ajax({
+                type: 'POST',
+                url: 'http://localhost:4000/usable',
+                data: bedInfoObj,
+                dataType: 'json',
+                success: function(data){
+                    if (data.isConnect == false) {
+                        alert('数据库连接失败！');
+                    } else {
+                        if (data.isSuccess == false) {
+                            if (data['errorMsg'] != undefined) {
+                                alert(data['errorMsg']);
+                            } else {
+                                alert('设置失败！');
+                            }              
+                        } else {
+                            bedInfoObj.usable = bedInfoObj.usable ^ 1;
+                            bedInfo_vm._data.bedInfos[index] = bedInfoObj;
+
+                            if (bedInfoObj.usable == 1) {
+                                alert('已将床位设置为可用！');
+                            } else {
+                                alert('已将床位设置为不可用！');
+                            }            
+                            cancelChecked();
+                        }
+                    }
+                },
+                error: function(xhr, type){
+                    console.log(xhr);
+                    alert('Ajax error!')
+                }
+            });            
         }
     });
+    
+    $('.js-distribute').on('click', function() {
+        var checkboxs = $('.js-selectOne').filter(function() {
+            return this.checked == true;
+        })
 
-    $('.js-addStudent').on('click', function() {
-        $('.modal').removeClass('js-modify');
+        if (checkboxs.length == 0) {
+            alert("请选择一个学生！");
+            return;
+        }
+
+        if (checkboxs.length > 1) {
+            alert("只能选择一个学生！");
+            return;
+        }
+
+        var bedInfoBlock = $(checkboxs[0]).parents('tr');
+
+        var index = bedInfoBlock.data('index'),
+            bedInfoObj = bedInfo_vm._data.bedInfos[index];
+
+        if (bedInfoObj.status != 0) {
+            alert('只有空床状态才可以分配学生！');
+            return;
+        }
+
         $('.modal').show();
     });
 
-    $('.js-edit').on('click', function() {
-        var student = $('.js-selectOne').filter(function() {
-            return this.checked == true;
-        });
-
-        if (student.length > 1) {
-            alert('仅能选择一个！');
-            return;
-        }
-
-        if (student.length < 1) {
-            alert('请选择一个要编辑的学生。');
-            return;
-        }
-
-        var student_id = student.parents('tr').find('.js-studentId').html().trim();
-
-        $.ajax({
-            type: 'POST',
-            url: 'http://localhost:8888/searchStudentById',
-            data: {
-                student_id: student_id
-            },
-            dataType: 'json',
-            success: function(data){
-                $('.modal').addClass('js-modify');
-                //插入查找到的内容
-                if (data.isSuccess == true) {
-                    var student = data.result[0];
-                    
-                    $('.modal').attr('data-id', student.id);
-                    
-                    $('.js-studentId').val(student.student_id);
-                    $('.js-dormId').val(student.dorm_id);
-                    $('.js-studentName').val(student.student_name);
-                    $('.js-class').val(student.class);
-                    $('.js-major').val(student.major);
-                    $('.js-origin').val(student.origin);
-                    $('.js-party').val(student.party);
-                    $('.js-study').val(student.study);
-                    $('.js-family').val(student.family);
-                    $('.js-isLeader').val(student.isleader);
-                    $('.js-others').val(student.others);
-                    $('.js-guidance').val(student.guidance);
-
-                    //显示modal
-                    $('.modal').show();
-
-                } else {
-                    alert('学生信息有误!');
-                }
-                
-            },
-            error: function(xhr, type){
-                console.log(xhr);
-                alert('Ajax error!')
-            }
-        }); 
-    });
-
     $('.js-cancel').on('click', function() {
-        $('.modal').removeClass('js-modify');
         clearModal();
         $('.modal').hide();
     });
 
     //清空模态框内容
     function clearModal() {
-        $('.modal').attr('data-id', '');
-                    
-        $('.js-studentId').val('');
-        $('.js-dormId').val('');
+        $('.js-studentNo').val('');
         $('.js-studentName').val('');
-        $('.js-class').val('');
-        $('.js-major').val('');
-        $('.js-origin').val('');
-        $('.js-party').val('');
-        $('.js-study').val('');
-        $('.js-family').val('');
-        $('.js-isLeader').val('');
-        $('.js-others').val('');
-        $('.js-guidance').val('');
     }
 
     $('.js-submit').on('click', function() {
-        var data = {
-            student_id: $('.js-studentId').val(),
-            dorm_id: $('.js-dormId').val(),
-            student_name: $('.js-studentName').val(),
-            class: $('.js-class').val(),
-            major: $('.js-major').val(),
-            origin: $('.js-origin').val(),
-            party: $('.js-party').val(),
-            study: $('.js-study').val(),
-            family: $('.js-family').val(),
-            isLeader: $('.js-isLeader').val(),
-            others: $('.js-others').val(),
-            guidance: $('.js-guidance').val(),
-            teacher_id: teacherInfo.id
-        }
+        var studentNo = $('.js-studentNo').val().trim(),
+            studentName = $('.js-studentName').val().trim();
         
-        if (data.student_id == '' 
-            || data.dorm_id == '' 
-            || data.student_name == '' 
-            || data.class == '' 
-            || data.major == '' 
-            || data.origin == ''
-            || data.party == ''
-            || data.study == ''
-            || data.family == ''
-            || data.isLeader == ''
-            || data.others == ''
-            || data.guidance == '') {
-                alert('输入信息不完全！');
-                return;
-            }
-        if ($('.modal').hasClass('js-modify')) {
-            //成功后移除
-            data.id =  $('.modal').data('id');
-
-            $.ajax({
-                type: 'POST',
-                url: 'http://localhost:8888/modifyStudent',
-                data: data,
-                dataType: 'json',
-                success: function(data){
-                    if (data.isSuccess == true) {
-                        alert('修改成功！');
-                        window.location.href = './studentInfo.html';
-                    } else {
-                        alert('修改失败，请重试！');
-                    }
-                },
-                error: function(xhr, type){
-                    console.log(xhr);
-                    alert('Ajax error!')
-                }
-            });
-            $('.modal').attr('data-id', '');
-
-        } else {
-            $.ajax({
-                type: 'POST',
-                url: 'http://localhost:8888/insertStudent',
-                data: data,
-                dataType: 'json',
-                success: function(data){
-                    if (data.isSuccess == true) {
-                        alert('添加成功！');
-                        window.location.href = './studentInfo.html';
-                    } else {
-                        alert('添加失败，请重试！');
-                    }
-                },
-                error: function(xhr, type){
-                    console.log(xhr);
-                    alert('Ajax error!')
-                }
-            });
+        if (studentNo.length == 0 || studentName.length == 0) {
+            alert('输入信息不完全！');
+            return;
         }
-    })
+
+        var re = /^\d{10}$/;
+        if (!re.test(studentNo)) {
+            alert('学号输入有误。')
+            return;
+        }   
+
+        var checkboxs = $('.js-selectOne').filter(function() {
+            return this.checked == true;
+        })
+
+        var bedInfoBlock = $(checkboxs[0]).parents('tr');
+
+        var index = bedInfoBlock.data('index'),
+            bedInfoObj = bedInfo_vm._data.bedInfos[index];
+
+        bedInfoObj.studentName = studentName;
+        bedInfoObj.studentNo = studentNo;      
+
+        $.ajax({
+            type: 'POST',
+            url: 'http://localhost:4000/distribute',
+            data: bedInfoObj,
+            dataType: 'json',
+            success: function(data){
+                if (data.isConnect == false) {
+                    alert('数据库连接失败！');
+                } else {
+                    if (data.isSuccess == false) {
+                        if (data['errorMsg'] != undefined) {
+                            alert(data['errorMsg']);
+                        } else {
+                            alert('分配失败！');
+                        }              
+                    } else {
+                        bedInfoObj.status = 1;
+                        bedInfo_vm._data.bedInfos[index] = bedInfoObj;
+                        clearModal();
+                        $('.modal').hide();
+                        alert('分配学生成功！');
+                        cancelChecked();
+                    }
+                }
+            },
+            error: function(xhr, type){
+                console.log(xhr);
+                alert('Ajax error!')
+            }
+        });
+
+    });
+
+    $('.js-roomNo-search').on('click', function() {
+        var roomNo = $('#roomNo-input').val().trim();
+
+        if (roomNo.length == 0) {
+            bedInfo_vm._data.bedInfos = bedInfo_vm._data.bedInfosBackup;
+            alert('请输入要查询的宿舍号。');
+            return;
+        }
+
+        var bedInfos = bedInfo_vm._data.bedInfos.filter(function(elem) {
+            return elem.roomNo.indexOf(roomNo) != -1;
+        });
+
+        if (bedInfos.length != 0) {
+            bedInfo_vm._data.bedInfos = bedInfos;
+        } else {
+            alert('查无此宿舍号。');
+        }
+    });
+
+    $('#roomNo-input').on('keypress', function(e) {
+        var e = e || window.event;
+        if (e.keyCode == 13) {
+             $('.js-roomNo-search').trigger('click');
+        }
+    });
+
+    $('.js-studentNo-search').on('click', function() {
+        var studentNo = $('#studentNo-input').val().trim();
+
+        if (studentNo.length == 0) {
+            bedInfo_vm._data.bedInfos = bedInfo_vm._data.bedInfosBackup;
+            alert('请输入要查询的学生学号。');
+            return;
+        }
+
+        var re = /^\d{10}$/;
+
+        if (!re.test(studentNo)) {
+            alert('学号输入有误。')
+            return;
+        }   
+
+        var bedInfos = bedInfo_vm._data.bedInfos.filter(function(elem) {
+            if (elem.studentNo == undefined) {
+                return false;
+            } else {
+                return elem.studentNo.indexOf(studentNo) != -1;
+            }
+        });
+
+        if (bedInfos.length != 0) {
+            bedInfo_vm._data.bedInfos = bedInfos;
+        } else {
+            alert('查无此学生。');
+        }
+    });
+
+    $('#studentNo-input').on('keypress', function(e) {
+        var e = e || window.event;
+        if (e.keyCode == 13) {
+             $('.js-studentNo-search').trigger('click');
+        }
+    });
+
+    function cancelChecked() {
+        var checkboxs = $('.js-selectOne').filter(function() {
+            return this.checked == true;
+        });
+
+        checkboxs.forEach(function(element) {
+            element.checked = false;
+        });  
+    }
 });

@@ -251,7 +251,7 @@
         margin: 0px 8px; }
     .modal .modal-content.student {
       width: 560px;
-      height: 720px; }
+      height: 160px; }
       .modal .modal-content.student .row {
         width: 100%; }
       .modal .modal-content.student .sm-item {
@@ -270,7 +270,12 @@
         -webkit-box-sizing: border-box;
         -moz-box-sizing: border-box; }
         .modal .modal-content.student .item-content .text {
-          margin-bottom: 8px; }
+          display: inline-block;
+          margin-bottom: 8px;
+          width: 20%; }
+        .modal .modal-content.student .item-content .input {
+          display: inline-block;
+          width: 75%; }
         .modal .modal-content.student .item-content input {
           box-sizing: border-box;
           -webkit-box-sizing: border-box;

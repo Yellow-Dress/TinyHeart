@@ -1,4 +1,21 @@
 Zepto(function($){
+    $.ajax({
+        type: 'POST',
+        url: 'http://localhost:4000/checkLogin',
+        success: function(data){
+            console.log(data)
+            if (data.isSuccess == true) {
+
+            } else {
+                window.location.href = './index.html';
+            }
+        },
+        error: function(xhr, type){
+            console.log(xhr);
+            alert('Ajax error!')
+        }
+    });
+
     $('.js-dorm').on('click', function() {
         window.location.href = './dormInfo.html';
     });

@@ -2,13 +2,6 @@ var mysql = require('mysql');
 var xlsx = require('xlsx');
 
 module.exports = {
-    checkLogin: function checkLogin(req, res, next) {
-        if (!req.session.user) {
-            console.log('未登录！');
-            return res.redirect('views/index.html');
-        }
-        next();
-    },
     parseExcel: function parseExcel(filePath) {
         var workBook = xlsx.readFile(filePath),
             workSheet = workBook.Sheets[workBook.SheetNames[0]];
