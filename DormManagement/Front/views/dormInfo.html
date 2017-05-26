@@ -2,17 +2,13 @@
 <html>
 	<head>
 		<meta charset="utf-8"/>
-		<script type="text/javascript" src="../scripts/vue.js"></script>
-		<script type="text/javascript" src="../scripts/zepto.min.js"></script>
-		<script type="text/javascript" src="../scripts/common.js"></script>
-		<script type="text/javascript" src="../scripts/studentInfo.js" charset="utf-8"></script>
 		<link type="text/css" href="../styles/css/common.css" rel="stylesheet"/>
 		<link type="text/css" href="../styles/css/info.css" rel="stylesheet" />
 		<link rel="icon" href="../img/favicon.ico" type="image/x-icon" />
 		<link rel="shortcut icon" href="../img/favicon.ico" type="image/x-icon" />
 		<title>宿舍管理系统 - DMS</title>
 	</head>
-	<body id="studentInfo">
+	<body>
 		<div class="nav">
 			<div class="logo">宿舍管理系统</div>
 			<div class="user">
@@ -21,62 +17,38 @@
 				<span class="btn btn-red js-logout" style="margin-left: 10px">退出</span>
 			</div>
 		</div>
-		<div class="content">
+		<div class="content" id="dormInfo">
 			<div class="main-block large">
 				<div class="studentInfo-hd">
-					<span class="back-arrow js-back"><strong>&#8678</strong></span>	
-					<span class="teacher-name"><strong>{{ teacherInfo.school }} | {{teacherInfo.name}}</strong></span>
-					<span></span>
-					<span class="student-count" >共 <i>{{ students.length }}</i> 人</span>
+					<span class="teacher-name"><strong>宿舍编号管理</strong></span>
+					<span class="student-count" >共 <i>{{ dormInfos.length }}</i> 个</span>
+					<span style="margin-left: 60px">宿舍号：</span>
+					<input class="search-input" type="text" id="roomNo-input" />
+					<span class="btn btn-blue js-roomNo-search">搜索</span>
 					<div class="operation-box">
-						<span class="btn btn-green">Excel模板下载</span>
-						<span class="btn btn-green js-excel">Excel导入</span>
-						<span class="btn btn-yellow js-clear">清空</span>
+						<span class="btn btn-green"><a href="http://localhost:4000/getDormInfoTemplate" style="text-decoration: none; color: #fff;">Excel模板下载</a></span>
+						<span class="btn btn-green js-upload">Excel导入</span>
+						<form id="uploadDormInfoForm" action="http://localhost:4000/uploadDormInfo" name="dormInfo" method="post" enctype= "multipart/form-data" style="display: none;"> 
+							<input id="uploadDormInfo" type="file" name="upfile" />  
+						</form>  
+						<span class="btn btn-orange js-add">新增</span>
 						<span class="btn btn-red js-delete">删除</span>
-						<span class="btn btn-orange js-addStudent">新增</span>
-						<span class="btn btn-blue js-edit">编辑</span>
 					</div>
 				</div>
 				<div class="studentInfo-bd">
 					<table cellpadding="0" cellspacing="0" border="0">
 						<thead>
 							<tr>
-								<th style="width: 10px;"><input type="checkbox" class="js-selectAll"/></th>
-								<th style="width: 5%">学号</th>
-								<th style="width: 5%;">姓名</th>
-								<th style="width: 5%">班级</th>
-								<th style="width: 5%">宿舍号</th>
-								<th style="width: 8%">专业</th>
-								<th style="width: 5%">生源地</th>
-								<th style="width: 6%">政治面貌</th>
-								<th style="width: 6%">学习排名</th>
-								<th style="width: 3%">家庭经济</th>
-								<th style="width: 2%">是否干部</th>
-								<th style="width: 10%; overflow: hidden;">其他情况</th>
-								<th style="width: 10%; overflow: hidden;">辅导情况</th>
-								<th style="width: 2%">照片</th>
-								<th style="width: 5%">备注</th>
+								<th style="width: 10px;"><input disabled="disabled" type="checkbox" class="js-selectAll"/></th>
+								<th style="width: 5%">楼号</th>
+								<th style="width: 7%;">宿舍号</th>
 							</tr>
 						</thead>
-						<tbody>
-							<tr v-for="student in students" data-id="{{ student.id }}">
+						<tbody class="js-tbody">
+							<tr v-for="(dormInfo, index) in dormInfos" :data-index="index">
 								<td><input type="checkbox" class="js-selectOne" /></td>
-								<td class="js-studentId">{{ student.student_id }}</td>
-								<td>{{ student.student_name }}</td>
-								<td>{{ student.class }}</td>
-								<td>{{ student.dorm_id }}</td>
-								<td>{{ student.major }}</td>
-								<td>{{ student.origin }}</td>
-								<td>{{ student.party }}</td>
-								<td>{{ student.study }}</td>
-								<td>{{ student.family }}</td>
-								<td>{{ student.isleader }}</td>
-								<td><span>{{ student.others }}</span></td>
-								<td><span>{{ student.guidance }}</span></td>
-								<td class="hasPhoto">
-									<strong v-if="student.hasPhoto">√</strong>
-								</td>
-								<td></td>
+								<td>{{ dormInfo.buildingNo }}</td>
+								<td>{{ dormInfo.roomNo }}</td>
 							</tr>
 						</tbody>
 					</table>
@@ -85,31 +57,13 @@
 		</div>
 		<div class="modal">
 			<div class="modal-content student">
-				<span class="title"><strong>增加/修改考核学生</strong></span>
+				<span class="title"><strong>新增宿舍信息</strong></span>
 				<div class="row">
 					<div class="sm-item">
 						<div class="item-content">
-							<div class="text">学号：</div>
+							<div class="text">楼号：</div>
 							<div class="input">
-								<input type="text" class="js-studentId"/>
-							</div>
-						</div>
-					</div>
-					<div class="sm-item">
-						<div class="item-content">
-							<div class="text">姓名：</div>
-							<div class="input">
-								<input type="text" class="js-studentName"/>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="sm-item">
-						<div class="item-content">
-							<div class="text">班级：</div>
-							<div class="input">
-								<input type="text" class="js-class"/>
+								<input type="text" class="js-buildingNo"/>
 							</div>
 						</div>
 					</div>
@@ -117,88 +71,8 @@
 						<div class="item-content">
 							<div class="text">宿舍号：</div>
 							<div class="input">
-								<input type="text" class="js-dormId"/>
+								<input type="text" class="js-roomNo"/>
 							</div>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="sm-item">
-						<div class="item-content">
-							<div class="text">专业：</div>
-							<div class="input">
-								<input type="text" class="js-major"/>
-							</div>
-						</div>
-					</div>
-					<div class="sm-item">
-						<div class="item-content">
-							<div class="text">生源地：</div>
-							<div class="input">
-								<input type="text" class="js-origin"/>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="sm-item">
-						<div class="item-content">
-							<div class="text">政治面貌：</div>
-							<div class="input">
-								<input type="text" list="party-option" class="js-party"/>
-								<datalist id="party-option">
-									<option>群众</option>
-									<option>共青团员</option>
-									<option>中共预备党员</option>
-									<option>中共党员</option>
-								</datalist>
-							</div>
-						</div>
-					</div>
-					<div class="sm-item">
-						<div class="item-content">
-							<div class="text">学习排名(eg.00/00)：</div>
-							<div class="input">
-								<input type="text" class="js-study"/>
-							</div>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="sm-item">
-						<div class="item-content">
-							<div class="text">家庭经济：</div>
-							<div class="input">
-								<input type="text" class="js-family"/>
-							</div>
-						</div>
-					</div>
-					<div class="sm-item">
-						<div class="item-content">
-							<div class="text">是否干部：</div>
-							<div class="input">
-								<input type="text" list="leader-option" class="js-isLeader" /> 
-								<datalist id="leader-option">
-									<option>是</option>
-									<option>否</option>
-								</datalist>
-							</div>	
-						</div>
-					</div>				
-				</div>
-				<div class="row">
-					<div class="ful-item">
-						<div class="item-content">
-							<div class="text">其他情况：</div>
-							<textarea class="js-others"></textarea>
-						</div>
-					</div>
-				</div>
-				<div class="row">
-					<div class="ful-item">
-						<div class="item-content">
-							<div class="text">辅导情况：</div>
-							<textarea class="js-guidance"></textarea>
 						</div>
 					</div>
 				</div>
@@ -207,5 +81,9 @@
 				</div>
 			</div>
 		</div>
+		<script type="text/javascript" src="../scripts/vue.js"></script>
+		<script type="text/javascript" src="../scripts/zepto.min.js"></script>
+		<script type="text/javascript" src="../scripts/common.js"></script>
+		<script type="text/javascript" src="../scripts/dormInfo.js" charset="utf-8"></script>
 	</body>
 </html>

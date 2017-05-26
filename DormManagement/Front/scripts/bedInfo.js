@@ -1,10 +1,11 @@
 Zepto(function($){
 
-     var bedInfo_vm = new Vue({
+    var bedInfosBackup = {};
+
+    var bedInfo_vm = new Vue({
         el: '#bedInfo',
         data: {
-            bedInfos: {},
-            bedInfosBackup: {}
+            bedInfos: {}
         },
         methods: {
 
@@ -15,11 +16,11 @@ Zepto(function($){
         type: 'POST',
         url: 'http://localhost:4000/checkLogin',
         success: function(data){
-            console.log(data)
             if (data.isSuccess == true) {
                 $.ajax({
                     type: 'POST',
                     url: 'http://localhost:4000/getErrorMsg',
+                    data: { from: 'bed'},
                     dataType: 'json',
                     success: function(data){
                         if (data.hasContent == true) {
@@ -46,9 +47,8 @@ Zepto(function($){
                             if (data.isSuccess == false) {
                                 alert('查询失败！');
                             } else {
-                                console.log(data)
-                                bedInfo_vm._data.bedInfos = data.bedInfos;
-                                bedInfo_vm._data.bedInfosBackup = data.bedInfos;                               
+                                bedInfo_vm._data.bedInfos = data.bedInfos.concat();
+                                bedInfosBackup = data.bedInfos.concat();                               
                             }
                         }
                     },
@@ -182,8 +182,11 @@ Zepto(function($){
                                 alert('办理入住失败！');
                             }              
                         } else {
+                            var backupIndex = bedInfosBackup.indexOf(bedInfoObj);
+                           
                             bedInfoObj.status = 2;
                             bedInfo_vm._data.bedInfos[index] = bedInfoObj;
+                            bedInfosBackup[backupIndex] = bedInfoObj;
                             alert('已成功办理入住！');
                             cancelChecked();
                         }
@@ -247,12 +250,15 @@ Zepto(function($){
                                 alert('办理退宿失败！');
                             }              
                         } else {
+                            var backupIndex = bedInfosBackup.indexOf(bedInfoObj);
+                           
                             bedInfoObj.status = 0;
                             bedInfoObj.studentNo = undefined;
                             bedInfoObj.studentName = undefined;
                             bedInfo_vm._data.bedInfos[index] = bedInfoObj;
+                            bedInfosBackup[backupIndex] = bedInfoObj;
                             alert('已成功办理退宿！');
-                            cancelChecked();
+                            cancelChecked();  
                         }
                     }
                 },
@@ -308,9 +314,13 @@ Zepto(function($){
                                 alert('设置失败！');
                             }              
                         } else {
+                            var backupIndex = bedInfosBackup.indexOf(bedInfoObj);
+
                             bedInfoObj.usable = bedInfoObj.usable ^ 1;
                             bedInfo_vm._data.bedInfos[index] = bedInfoObj;
-
+                            bedInfosBackup[backupIndex] = bedInfoObj;
+                            console.log(bedInfo_vm._data.bedInfos);
+                            console.log(bedInfosBackup);
                             if (bedInfoObj.usable == 1) {
                                 alert('已将床位设置为可用！');
                             } else {
@@ -410,8 +420,11 @@ Zepto(function($){
                             alert('分配失败！');
                         }              
                     } else {
+                        var backupIndex = bedInfosBackup.indexOf(bedInfoObj);
+
                         bedInfoObj.status = 1;
                         bedInfo_vm._data.bedInfos[index] = bedInfoObj;
+                        bedInfosBackup[backupIndex] = bedInfoObj;
                         clearModal();
                         $('.modal').hide();
                         alert('分配学生成功！');
@@ -431,7 +444,7 @@ Zepto(function($){
         var roomNo = $('#roomNo-input').val().trim();
 
         if (roomNo.length == 0) {
-            bedInfo_vm._data.bedInfos = bedInfo_vm._data.bedInfosBackup;
+            bedInfo_vm._data.bedInfos = bedInfosBackup.concat();
             alert('请输入要查询的宿舍号。');
             return;
         }
@@ -454,11 +467,19 @@ Zepto(function($){
         }
     });
 
+    $('#roomNo-input').on('input', function(e) {
+        var roomNoInput = $(this);
+
+        if (roomNoInput.val().trim().length == 0) {
+            bedInfo_vm._data.bedInfos = bedInfosBackup.concat();
+        }
+    });
+
     $('.js-studentNo-search').on('click', function() {
         var studentNo = $('#studentNo-input').val().trim();
 
         if (studentNo.length == 0) {
-            bedInfo_vm._data.bedInfos = bedInfo_vm._data.bedInfosBackup;
+            bedInfo_vm._data.bedInfos = bedInfosBackup.concat();
             alert('请输入要查询的学生学号。');
             return;
         }
@@ -488,7 +509,15 @@ Zepto(function($){
     $('#studentNo-input').on('keypress', function(e) {
         var e = e || window.event;
         if (e.keyCode == 13) {
-             $('.js-studentNo-search').trigger('click');
+            $('.js-studentNo-search').trigger('click');
+        } 
+    });
+
+    $('#studentNo-input').on('input', function(e) {
+        var studentNoInput = $(this);
+
+        if (studentNoInput.val().trim().length == 0) {
+            bedInfo_vm._data.bedInfos = bedInfosBackup.concat();
         }
     });
 

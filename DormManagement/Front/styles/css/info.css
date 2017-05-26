@@ -272,10 +272,10 @@
         .modal .modal-content.student .item-content .text {
           display: inline-block;
           margin-bottom: 8px;
-          width: 20%; }
+          width: 30%; }
         .modal .modal-content.student .item-content .input {
           display: inline-block;
-          width: 75%; }
+          width: 65%; }
         .modal .modal-content.student .item-content input {
           box-sizing: border-box;
           -webkit-box-sizing: border-box;

@@ -2,7 +2,7 @@ var mysql = require('mysql');
 var xlsx = require('xlsx');
 
 module.exports = {
-    parseExcel: function parseExcel(filePath) {
+    parseBedExcel: function(filePath) {
         var workBook = xlsx.readFile(filePath),
             workSheet = workBook.Sheets[workBook.SheetNames[0]];
 
@@ -85,6 +85,52 @@ module.exports = {
                     }
                     break;
                         
+            }
+            data[row][headers[col]] = value;
+        })
+
+        return data.slice(2);
+    },
+    parseDormExcel: function(filePath) {
+        var workBook = xlsx.readFile(filePath),
+            workSheet = workBook.Sheets[workBook.SheetNames[0]];
+
+        var keys = Object.keys(workSheet);
+        var headers = [];
+        var data = [];
+
+        keys.filter(function(k) {
+            return k[0] !==  '!';
+        }).forEach(function(k) {
+            var col = k.substring(0, 1);
+            var row = parseInt(k.substring(1));
+            var value = workSheet[k].v;
+
+            if (row === 1) {
+                    // console.log(value)
+                if (value.indexOf('序号') != -1) {
+                    headers[col] = 'id';
+                }
+
+                if (value.indexOf('楼号') != -1) {
+                    headers[col] = 'buildingNo';
+                }      
+
+                if (value.indexOf('宿舍号') != -1) {
+                    headers[col] = 'roomNo';
+                }      
+
+                return;
+            }
+
+            if (!data[row]) {
+                data[row] = {}
+            }
+
+            switch(headers[col]) {
+                case 'roomNo':
+                    value = (value + '').trim();
+                    break;                       
             }
             data[row][headers[col]] = value;
         })
