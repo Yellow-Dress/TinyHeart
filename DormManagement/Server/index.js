@@ -13,6 +13,7 @@ var log = require('./log.js');
 var async = require('async');
 var logPath_bed = path.join(__dirname, 'dms_bed.log');
 var logPath_dorm = path.join(__dirname, 'dms_dorm.log');
+var logPath_student = path.join(__dirname, 'dms_student.log');
 
 var app = express();
 
@@ -99,44 +100,39 @@ app.post('/login', function(req, res) {
 
 });
 
-app.get('/getBedInfoTemplate', function(req, res) {
-    var fileName = 'BedTemplate.xlsx',
-        filePath = path.join(__dirname, 'download/' + fileName);
-        console.log(filePath);
-        try {
-            var stats = fs.statSync(filePath);
-            if (stats.isFile()) {
-                res.setHeader('Content-Type', 'application/octet-stream');
-                res.setHeader('Content-Disposition', 'attachment; filename=' + fileName);
-                res.setHeader('Content-Length', stats.size);
-                fs.createReadStream(filePath).pipe(res);
-            } else {
-                res.end(404);
-            }
-        } catch(e) {
-            console.log(e)
-            res.end(404);
-        }
-});
+app.get('/getTemplate/:_info', function(req, res) {
+    var fileName = 'DormTemplate.xlsx';
 
-app.get('/getDormInfoTemplate', function(req, res) {
-    var fileName = 'DormTemplate.xlsx',
-        filePath = path.join(__dirname, 'download/' + fileName);
-        console.log(filePath);
-        try {
-            var stats = fs.statSync(filePath);
-            if (stats.isFile()) {
-                res.setHeader('Content-Type', 'application/octet-stream');
-                res.setHeader('Content-Disposition', 'attachment; filename=' + fileName);
-                res.setHeader('Content-Length', stats.size);
-                fs.createReadStream(filePath).pipe(res);
-            } else {
-                res.end(404);
-            }
-        } catch(e) {
-            console.log(e)
+    switch(req.params._info) {
+        case 'dormInfo':
+            fileName = 'DormTemplate.xlsx';
+            break;
+        case 'bedInfo':
+            fileName = 'BedTemplate.xlsx';
+            break;
+        case 'studentInfo':
+            fileName = 'StudentTemplate.xlsx';
+            break;
+    }
+
+    filePath = path.join(__dirname, 'download/' + fileName);
+
+    console.log(filePath);
+
+    try {
+        var stats = fs.statSync(filePath);
+        if (stats.isFile()) {
+            res.setHeader('Content-Type', 'application/octet-stream');
+            res.setHeader('Content-Disposition', 'attachment; filename=' + fileName);
+            res.setHeader('Content-Length', stats.size);
+            fs.createReadStream(filePath).pipe(res);
+        } else {
             res.end(404);
         }
+    } catch(e) {
+        console.log(e)
+        res.end(404);
+    }
 });
 
 app.post('/uploadBedInfo', function(req, res) {
@@ -183,6 +179,31 @@ app.post('/uploadDormInfo', function(req, res) {
 
             updateDormInfoByExcel(targetPath).then(function() {
                 res.redirect('views/dormInfo.html');
+            });
+            
+        })
+    })
+});
+
+app.post('/uploadStudentInfo', function(req, res) {
+    var fstream;
+    req.pipe(req.busboy);
+    req.busboy.on('file', function(fieldName, file, fileName) {
+        console.log('Uploading:' + fileName);
+
+        var targetPath = path.join(__dirname, 'upload/studentInfo.xlsx');
+       
+        fstream = fs.createWriteStream(targetPath);
+
+        file.pipe(fstream);
+        fstream.on('close', function() {
+            console.log('上传完毕');
+            
+            // 清空日志
+            log.delete(logPath_dorm);
+
+            updateStudentInfoByExcel(targetPath).then(function() {
+                res.redirect('views/studentList.html');
             });
             
         })
@@ -237,6 +258,31 @@ app.post('/getDormInfo', function(req, res) {
     })    
 });
 
+
+app.post('/getStudentInfo', function(req, res) {
+	var studentInfoQuerySql = "SELECT * FROM student WHERE deleteBit=? ORDER BY studentNo",
+		studentInfoQuerySql_Params = [0];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(studentInfoQuerySql, studentInfoQuerySql_Params, function(err, result) {
+            connection.release();
+
+            if (err) {
+                console.log(err);
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+
+            res.send( {isConnect: true, isSuccess: true, studentInfos: result} );
+
+        });
+    })    
+});
+
 app.post('/getErrorMsg', function(req, res) {
     var from = req.body.from,
         logPath;
@@ -247,6 +293,9 @@ app.post('/getErrorMsg', function(req, res) {
             break;
         case 'dorm':
             logPath = logPath_dorm;
+            break;
+        case 'student':
+            logPath = logPath_student;
             break;
     }
 
@@ -571,6 +620,79 @@ app.post('/addDorm', function(req, res) {
     });  
 });
 
+app.post('/addStudent', function(req, res) {
+    var studentNo = req.body.studentNo,
+        studentName = req.body.studentName;
+
+    var studentInfoQuerySql = "SELECT * FROM student WHERE studentNo=?",
+        studentInfoQuerySql_Params = [studentNo];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(studentInfoQuerySql, studentInfoQuerySql_Params, function(err, result) {
+            connection.release();
+            if (err) {
+                console.log(err);
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+            if (result.length == 0) {
+
+                var studentInfoInsertSql = "INSERT INTO student(studentNo, studentName) VALUES(?, ?)",
+                    studentInfoInsertSql_Params = [studentNo, studentName];
+
+                sqlPool.getConnection(function(err, connection) {
+                    if (err) {
+                        console.log(err);
+                        res.send( {isConnect: false, isSuccess: false} );
+                    }
+
+                    var sqlQuery = connection.query(studentInfoInsertSql, studentInfoInsertSql_Params, function(err, result) {
+                        connection.release();
+                        if (err) {
+                            console.log(err);
+                            res.send( {isConnect: true, isSuccess: false} );
+                        }
+                        
+                        res.send( {isConnect: true, isSuccess: true} );
+
+                    });
+                });
+              
+            } else {
+                var studentInfoObj = result[0];
+                if (studentInfoObj['deleteBit'] == 0) {
+                    res.send( {isConnect: true, isSuccess: false, errorMsg: '已存在该学号信息。'} );
+                } else {
+                    var studentInfoUpdateSql = "UPDATE student SET deleteBit=?, studentName=? WHERE studentNo=?",
+                        studentInfoUpdateSql_Params = [0, studentInfoObj['studentName'], studentInfoObj['studentNo']];
+
+                    sqlPool.getConnection(function(err, connection) {
+                        if (err) {
+                            console.log(err);
+                            res.send( {isConnect: false, isSuccess: false} );
+                        }
+
+                        var sqlQuery = connection.query(studentInfoUpdateSql, studentInfoUpdateSql_Params, function(err, result) {
+                            connection.release();
+                            if (err) {
+                                console.log(err);
+                                res.send( {isConnect: true, isSuccess: false} );
+                            }
+                            
+                            res.send( {isConnect: true, isSuccess: true} );
+
+                        });
+                    });                   
+                }              
+            }
+        });
+    });  
+});
+
 app.post('/deleteDorm', function(req, res) {
     var buildingNo = req.body.buildingNo,
         roomNo = req.body.roomNo;
@@ -616,6 +738,83 @@ app.post('/deleteDorm', function(req, res) {
               
             } else {
                 res.send( {isConnect: true, isSuccess: false, errorMsg: '不存在该宿舍信息。'} );
+            }
+        });
+    });  
+});
+
+app.post('/deleteStudent', function(req, res) {
+    var studentNo = req.body.studentNo,
+        studentName = req.body.studentName;
+
+    var studentInfoQuerySql = "SELECT * FROM student WHERE studentNo=? AND deleteBit=?",
+        studentInfoQuerySql_Params = [studentNo, 0];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(studentInfoQuerySql, studentInfoQuerySql_Params, function(err, result) {
+            connection.release();
+            if (err) {
+                console.log(err);
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+        
+            if (result.length > 0) {
+
+                var studentInfoDeleteSql = "UPDATE student SET deleteBit=? WHERE studentNo=?",
+                    studentInfoDeleteSql_Params = [1, studentNo];
+
+                sqlPool.getConnection(function(err, connection) {
+                    if (err) {
+                        console.log(err);
+                        res.send( {isConnect: false, isSuccess: false} );
+                    }
+
+                    var sqlQuery = connection.query(studentInfoDeleteSql, studentInfoDeleteSql_Params, function(err, result) {
+                        connection.release();
+                        if (err) {
+                            console.log(err);
+                            res.send( {isConnect: true, isSuccess: false} );
+                        }
+                        
+                        res.send( {isConnect: true, isSuccess: true} );
+
+                    });
+                });
+              
+            } else {
+                res.send( {isConnect: true, isSuccess: false, errorMsg: '不存在该学号信息。'} );
+            }
+        });
+    });  
+});
+
+app.post('/checkDormInfo', function(req, res) {
+    var dormInfoQuerySql = "SELECT * FROM dorm WHERE deleteBit=?",
+        dormInfoQuerySql_Params = [0];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(dormInfoQuerySql, dormInfoQuerySql_Params, function(err, result) {
+            connection.release();
+            if (err) {
+                console.log(err);
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+        
+            if (result.length > 0) {
+                res.send( {isConnect: true, isSuccess: true} );
+              
+            } else {
+                res.send( {isConnect: true, isSuccess: false} );
             }
         });
     });  
@@ -868,6 +1067,148 @@ function updateDormInfoByExcel(filePath) {
     })
 }
 
+function updateStudentInfoByExcel(filePath) {
+    // 一条条读，读一条，验证成功以对象形式加入数组；一旦有一条不成功，清空数组，写入Log；
+    
+    // excel表格中全部读完后再修改数据库
+
+    // 如果已经存在记录（buildingNo+roomNo+bedNo），则删除后插入
+    // 如果没有，则新增
+    // 返回promise，完毕后执行
+    return new Promise(function(resolve, reject) {
+        var studentInfoArr = [];
+
+        var resolveFunc = resolve;
+
+        var flag = true;
+
+        var recordCount = 1;
+
+        async.each(utils.parseStudentExcel(filePath), function(studentInfoObj, callback) {
+            if (validateStudentInfo(studentInfoObj, recordCount)) {
+                studentInfoArr.push(studentInfoObj);
+            } else {
+                flag = false;
+            }
+            recordCount++;
+            callback();
+        }, function(err) {
+            if (err) {
+                console.log(err);
+            } else {
+                // 如果有不合格记录，则全部不更新
+                if (flag) {
+                    // 插入数据库
+                    async.eachSeries(studentInfoArr, function(studentInfoObj, callback) {
+                        try {
+                            var studentInfoQuerySql = "SELECT * FROM student WHERE studentNo=?",
+                                studentInfoQuerySql_Params = [studentInfoObj['studentNo']];
+
+                            console.log(studentInfoObj);
+
+                            sqlPool.getConnection(function(err, connection) {
+                                if (err) {
+                                    console.log(err);
+                                    callback(err);
+                                }
+
+                                var sqlQuery = connection.query(studentInfoQuerySql, studentInfoQuerySql_Params, function(err, result) {
+                                    if (err) {
+                                        console.log(err);
+                                        connection.release();
+                                        callback(err);
+                                    }
+                                
+                                    if (result.length > 0) {
+                                        var studentInfoResultObj = result[0];
+                                        if (studentInfoResultObj['deleteBit'] == 1) {
+                                            // 已存在但是被删除了，则修改deleteBit和更新studentName
+
+                                            var studentInfoUpdateSql = "UPDATE student SET deleteBit=?, studentName=? WHERE studentNo=?",
+                                                studentInfoUpdateSql_Params = [0, studentInfoObj['studentName'], studentInfoObj['studentNo']];
+
+                                            sqlPool.getConnection(function(err, connection) {
+                                                if (err) {
+                                                    console.log(err);
+                                                    callback(err);
+                                                }
+
+                                                var sqlQuery = connection.query(studentInfoUpdateSql, studentInfoUpdateSql_Params, function(err, result) {
+                                                    connection.release();
+                                                    if (err) {
+                                                        console.log(err);
+                                                        callback(err);
+                                                    }
+                                                    
+                                                    callback();
+                                                });
+                                            });                                          
+                                        } else {
+                                            console.log(studentInfoObj['studentName'])
+                                            var studentInfoUpdateSql = "UPDATE student SET studentName=? WHERE studentNo=?",
+                                                studentInfoUpdateSql_Params = [studentInfoObj['studentName'], studentInfoObj['studentNo']];
+
+                                            sqlPool.getConnection(function(err, connection) {
+                                                if (err) {
+                                                    console.log(err);
+                                                    callback(err);
+                                                }
+
+                                                var sqlQuery = connection.query(studentInfoUpdateSql, studentInfoUpdateSql_Params, function(err, result) {
+                                                    connection.release();
+                                                    if (err) {
+                                                        console.log(err);
+                                                        callback(err);
+                                                    }
+                                                    
+                                                    callback();
+                                                });
+                                            });  
+                                        }
+                                        
+                                    } else {
+                                        // 没有该床位记录，则插入
+                                        var studentInfoInsertSql = "INSERT INTO student(studentNo, studentName) VALUES(?, ?)",
+                                            studentInfoInsertSql_Params = [studentInfoObj['studentNo'], studentInfoObj['studentName']];                                    
+                                        console.log('not exist')
+                                        sqlPool.getConnection(function(err, connection) {
+                                            if (err) {
+                                                console.log(err);
+                                                callback(err);
+                                            }
+
+                                            var sqlQuery = connection.query(studentInfoInsertSql, studentInfoInsertSql_Params, function(err, result) {
+                                                if (err) {
+                                                    console.log(err);
+                                                    connection.release();
+                                                    callback(err);
+                                                }
+
+                                                callback();
+                                            })
+                                        });
+                                    }
+                                });
+                            });
+
+                        } catch(e) {
+                            console.log(e);
+                        }
+                    }, function(err) {
+                        if (err) {
+                            console.log(err);
+                        }
+                        resolveFunc();
+                    });
+
+                } else {
+                    resolveFunc();
+                }
+            }
+        })
+    })
+}
+
 function validateBedInfo(bedInfoObj, recordCount) {
 
     return new Promise(function(resolve, reject) {
@@ -1016,6 +1357,31 @@ function validateDormInfo(dormInfoObj, recordCount) {
             }
         }
     }
+
+    return flag;
+}
+
+function validateStudentInfo(studentInfoObj, recordCount) {
+    var flag = true;
+
+    // 检测是否学号为空
+    if (studentInfoObj['studentNo'] == undefined) {
+        log.write(logPath_student, "第" + recordCount + "条记录缺少学号。");
+        flag = false;
+    } else {
+        var re = /^\d{10}$/;
+
+        if (!re.test(studentInfoObj['studentNo'])) {
+            log.write(logPath_student, "第" + recordCount + "条记录学号输入有误。");
+            flag = false;            
+        }
+    }
+
+    // 检测是否姓名为空
+    if (studentInfoObj['studentName'] == undefined) {
+        log.write(logPath_student, "第" + recordCount + "条记录缺少姓名。");
+        flag = false;
+    } 
 
     return flag;
 }

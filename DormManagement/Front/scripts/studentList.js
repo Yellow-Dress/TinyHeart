@@ -1,11 +1,11 @@
 Zepto(function($){
 
-    var dormInfosBackup = {};
+    var studentInfosBackup = {};
 
-    var dormInfo_vm = new Vue({
-        el: '#dormInfo',
+    var studentInfo_vm = new Vue({
+        el: '#studentInfo',
         data: {
-            dormInfos: {}
+            studentInfos: {}
         },
         methods: {
 
@@ -20,7 +20,7 @@ Zepto(function($){
                 $.ajax({
                     type: 'POST',
                     url: 'http://localhost:4000/getErrorMsg',
-                    data: { from: 'dorm' },
+                    data: { from: 'student' },
                     dataType: 'json',
                     success: function(data){
                         if (data.hasContent == true) {
@@ -35,7 +35,7 @@ Zepto(function($){
 
                 $.ajax({  
                     type: 'POST',
-                    url: 'http://localhost:4000/getDormInfo',
+                    url: 'http://localhost:4000/getStudentInfo',
                     dataType: 'json',
                     success: function(data){
                         if (data.isConnect == false) {
@@ -44,8 +44,8 @@ Zepto(function($){
                             if (data.isSuccess == false) {
                                 alert('查询失败！');
                             } else {
-                                dormInfo_vm._data.dormInfos = data.dormInfos.concat();                           
-                                dormInfosBackup = data.dormInfos.concat();                                                          
+                                studentInfo_vm._data.studentInfos = data.studentInfos.concat();                           
+                                studentInfosBackup = data.studentInfos.concat();                                                          
                             }
                         }
                     },
@@ -131,27 +131,27 @@ Zepto(function($){
         })
 
         if (checkboxs.length == 0) {
-            alert("请选择一个宿舍！");
+            alert("请选择一个学生！");
             return;
         }
 
         if (checkboxs.length > 1) {
-            alert("只能选择一个宿舍！");
+            alert("只能选择一个学生！");
             return;
         }
         
-        var dormInfoBlock = $(checkboxs[0]).parents('tr');
+        var studentInfoBlock = $(checkboxs[0]).parents('tr');
 
         var deleteCheck = confirm('确认删除吗？');
         if (deleteCheck == true) {
-            // 校验是否能办理入住
-            var index = dormInfoBlock.data('index'),
-                dormInfoObj = dormInfo_vm._data.dormInfos[index];
+       
+            var index = studentInfoBlock.data('index'),
+                studentInfoObj = studentInfo_vm._data.studentInfos[index];
             
             $.ajax({
                 type: 'POST',
-                url: 'http://localhost:4000/deleteDorm',
-                data: dormInfoObj,
+                url: 'http://localhost:4000/deleteStudent',
+                data: studentInfoObj,
                 dataType: 'json',
                 success: function(data){
                     if (data.isConnect == false) {
@@ -164,12 +164,12 @@ Zepto(function($){
                                 alert('删除失败！');
                             }              
                         } else {
-                            var backupIndex = dormInfosBackup.indexOf(dormInfoObj);
+                            var backupIndex = studentInfosBackup.indexOf(studentInfoObj);
                             
-                            dormInfo_vm._data.dormInfos.splice(index, 1);
-                            dormInfosBackup.splice(backupIndex, 1);
+                            studentInfo_vm._data.studentInfos.splice(index, 1);
+                            studentInfosBackup.splice(backupIndex, 1);
 
-                            alert('已成功删除该宿舍信息！');
+                            alert('已成功删除该学生信息！');
                             cancelChecked();
                         }
                     }
@@ -197,55 +197,30 @@ Zepto(function($){
 
     //清空模态框内容
     function clearModal() {
-        $('.js-buildingNo').val('');
-        $('.js-roomNo').val('');
+        $('.js-studentNo').val('');
+        $('.js-studentName').val('');
     }
 
     $('.js-submit').on('click', function() {
 
-        var buildingNo = $('.js-buildingNo').val().trim(),
-            roomNo = $('.js-roomNo').val().trim();
+        var studentNo = $('.js-studentNo').val().trim(),
+            studentName = $('.js-studentName').val().trim();
         
-        if (buildingNo.length == 0 || roomNo.length == 0) {
+        if (studentNo.length == 0 || studentName.length == 0) {
             alert('输入信息不完全！');
             return;
         }
 
-        var re = /^\d{1,2}$/;
-        if (!re.test(buildingNo)) {
-            alert('楼号输入有误。（5 或 13 或 14）')
-            return;
-        }
-
-        buildingNo = parseInt(buildingNo);
-
-        if ([5,13,14].indexOf(buildingNo) == -1) {
-            alert('楼号输入有误。（5 或 13 或 14）')
-            return;           
-        }
-
-        var re;
-        switch(buildingNo) {
-            case 5:
-                re = /^5\d{3}$/;
-                break;
-            case 13:
-                re = /^F\d{4}$/;
-                break;
-            case 14:
-                re = /^E\d{4}$/;              
-                break;           
-        }
-
-        if (!re.test(roomNo)) {
-            alert('宿舍号输入有误。');
+        var re = /^\d{10}$/;
+        if (!re.test(studentNo)) {
+            alert('学号输入有误。')
             return;
         }
 
         $.ajax({
             type: 'POST',
-            url: 'http://localhost:4000/addDorm',
-            data: { buildingNo: buildingNo, roomNo: roomNo },
+            url: 'http://localhost:4000/addStudent',
+            data: { studentNo: studentNo, studentName: studentName },
             dataType: 'json',
             success: function(data){
                 if (data.isConnect == false) {
@@ -259,12 +234,12 @@ Zepto(function($){
                         }              
                     } else {
  
-                        dormInfo_vm._data.dormInfos.push({ buildingNo: buildingNo, roomNo: roomNo });
-                        dormInfosBackup.push({ buildingNo: buildingNo, roomNo: roomNo });
+                        studentInfo_vm._data.studentInfos.push({ studentNo: studentNo, studentName: studentName });
+                        studentInfosBackup.push({ studentNo: studentNo, studentName: studentName });
 
                         clearModal();
                         $('.modal').hide();
-                        alert('新增宿舍成功！');
+                        alert('新增学生成功！');
                     }
                 }
             },
@@ -277,40 +252,40 @@ Zepto(function($){
     });
 
 
-    $('.js-roomNo-search').on('click', function() {
-        var roomNo = $('#roomNo-input').val().trim();
+    $('.js-studentNo-search').on('click', function() {
+        var studentNo = $('#studentNo-input').val().trim();
 
-        if (roomNo.length == 0) {
-            dormInfo_vm._data.dormInfos = dormInfosBackup.concat();
-            alert('请输入要查询的宿舍号。');
+        if (studentNo.length == 0) {
+            studentInfo_vm._data.studentInfos = studentInfosBackup.concat();
+            alert('请输入要查询的学号。');
             return;
         }
 
-        var dormInfos = dormInfo_vm._data.dormInfos.filter(function(elem) {
-            return elem.roomNo.indexOf(roomNo) != -1;
+        var studentInfos = studentInfo_vm._data.studentInfos.filter(function(elem) {
+            return elem.studentNo.indexOf(studentNo) != -1;
         });
 
-        if (dormInfos.length != 0) {
-            dormInfo_vm._data.dormInfos = dormInfos;
+        if (studentInfos.length != 0) {
+            studentInfo_vm._data.studentInfos = studentInfos;
         } else {
-            alert('查无此宿舍号。');
+            alert('查无此学号。');
         }
     });
 
-    $('#roomNo-input').on('keypress', function(e) {
+    $('#studentNo-input').on('keypress', function(e) {
         var e = e || window.event;
 
         if (e.keyCode == 13) {
-            $('.js-roomNo-search').trigger('click');
+            $('.js-studentNo-search').trigger('click');
         } 
 
     });
 
-    $('#roomNo-input').on('input', function(e) {
-        var roomNoInput = $(this);
+    $('#studentNo-input').on('input', function(e) {
+        var studentNoInput = $(this);
 
-        if (roomNoInput.val().trim().length == 0) {
-            dormInfo_vm._data.dormInfos = dormInfosBackup.concat();
+        if (studentNoInput.val().trim().length == 0) {
+            studentInfo_vm._data.studentInfos = studentInfosBackup.concat();
         }
     })
     

@@ -134,12 +134,12 @@ Zepto(function($){
         })
 
         if (checkboxs.length == 0) {
-            alert("请选择一个学生！");
+            alert("请选择一个床位！");
             return;
         }
 
         if (checkboxs.length > 1) {
-            alert("只能选择一个学生！");
+            alert("只能选择一个床位！");
             return;
         }
         
@@ -206,12 +206,12 @@ Zepto(function($){
         })
 
         if (checkboxs.length == 0) {
-            alert("请选择一个学生！");
+            alert("请选择一个床位！");
             return;
         }
 
         if (checkboxs.length > 1) {
-            alert("只能选择一个学生！");
+            alert("只能选择一个床位！");
             return;
         }
         
@@ -276,12 +276,12 @@ Zepto(function($){
         })
 
         if (checkboxs.length == 0) {
-            alert("请选择一个学生！");
+            alert("请选择一个床位！");
             return;
         }
 
         if (checkboxs.length > 1) {
-            alert("只能选择一个学生！");
+            alert("只能选择一个床位！");
             return;
         }
         
@@ -344,12 +344,12 @@ Zepto(function($){
         })
 
         if (checkboxs.length == 0) {
-            alert("请选择一个学生！");
+            alert("请选择一个床位！");
             return;
         }
 
         if (checkboxs.length > 1) {
-            alert("只能选择一个学生！");
+            alert("只能选择一个床位！");
             return;
         }
 
