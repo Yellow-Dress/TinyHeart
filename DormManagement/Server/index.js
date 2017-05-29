@@ -641,8 +641,8 @@ app.post('/addStudent', function(req, res) {
             }
             if (result.length == 0) {
 
-                var studentInfoInsertSql = "INSERT INTO student(studentNo, studentName) VALUES(?, ?)",
-                    studentInfoInsertSql_Params = [studentNo, studentName];
+                var studentInfoInsertSql = "INSERT INTO student(studentNo, studentName, code) VALUES(?, ?, ?)",
+                    studentInfoInsertSql_Params = [studentNo, studentName, Math.random().toString(36).substr(2).substr(0, 7)];
 
                 sqlPool.getConnection(function(err, connection) {
                     if (err) {
@@ -668,7 +668,7 @@ app.post('/addStudent', function(req, res) {
                     res.send( {isConnect: true, isSuccess: false, errorMsg: '已存在该学号信息。'} );
                 } else {
                     var studentInfoUpdateSql = "UPDATE student SET deleteBit=?, studentName=? WHERE studentNo=?",
-                        studentInfoUpdateSql_Params = [0, studentInfoObj['studentName'], studentInfoObj['studentNo']];
+                        studentInfoUpdateSql_Params = [0, studentName, studentNo];
 
                     sqlPool.getConnection(function(err, connection) {
                         if (err) {
@@ -1167,9 +1167,9 @@ function updateStudentInfoByExcel(filePath) {
                                         }
                                         
                                     } else {
-                                        // 没有该床位记录，则插入
-                                        var studentInfoInsertSql = "INSERT INTO student(studentNo, studentName) VALUES(?, ?)",
-                                            studentInfoInsertSql_Params = [studentInfoObj['studentNo'], studentInfoObj['studentName']];                                    
+                                        // 没有该学生记录，则插入
+                                        var studentInfoInsertSql = "INSERT INTO student(studentNo, studentName, code) VALUES(?, ?, ?)",
+                                            studentInfoInsertSql_Params = [studentInfoObj['studentNo'], studentInfoObj['studentName'], Math.random().toString(36).substr(2).substr(0, 7)];                                    
                                         console.log('not exist')
                                         sqlPool.getConnection(function(err, connection) {
                                             if (err) {
