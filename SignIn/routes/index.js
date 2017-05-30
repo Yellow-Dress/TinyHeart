@@ -61,7 +61,7 @@ router.post('/signin',function(req,res){
       }
       //回传给前端数据
       res.json({message: message});
-    });、
+    });
 });
 
 module.exports = router;
