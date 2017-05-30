@@ -60,6 +60,11 @@
     display: none;
 }
 
+.modal-center{
+    width: 200px;
+    margin: 0 auto;
+}
+
 @media screen and (max-width:1024px) {
     .input-width{
         width: 100%;    

@@ -83,3 +83,22 @@ function deleteProcess(id){
         }
     })
 }
+
+var url = '';
+function seeCode(code){
+    console.log(code);
+    var host = 'sspku.lilingkun.com:3000/';
+    // var redirctUrl = "http://"+host+"/handleCode?code="+code;
+    // //var wxUrl =  "https://qy.weixin.qq.com/cgi-bin/loginpage?corp_id=wx1d3765eb45497a18&redirect_uri="+redirctUrl+"&state=xxxx&usertype=member"
+    // var wxUrl = "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx1d3765eb45497a18&redirect_uri="+redirctUrl+"&response_type=code&scope=snsapi_base&state=1#wechat_redirect";
+    // url = "http://www.kuaizhan.com/common/encode-png?large=true&data="+wxUrl;
+    url = "http://"+host+"qrcode?code="+code
+    $("#imgSrc").attr('src',url); 
+}
+
+function downloadPic(){
+    var alink = document.createElement("a");
+    alink.href = url;
+    alink.download = "code.jpg";
+    alink.click();
+}

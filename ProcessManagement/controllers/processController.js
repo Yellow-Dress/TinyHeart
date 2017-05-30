@@ -49,8 +49,7 @@ module.exports = {
         });   
 	},
 	addProcess: function (req, res) {
-		//https://cli.im/api/qrcode/code?text=//cli.im&mhid=t0DBWAvmksghMHcsKdJQP68
-	    var judge = 1;
+		var judge = 1;
 	    var sequence = '0';
 	    var currentUser = req.session.user;
 	    var Process = {
@@ -66,15 +65,20 @@ module.exports = {
                 judge = 0;
             }else {
             	url = cryptoComm.encryptUrl(String(result.id));
-            	judge = storeCodeUrl(req,res,result.id,url);
-            	if(judge == 2){
-            		req.flash('success', '二维码生成失败!');
-            	}else{
-            		req.flash('success', '发布成功!');
-            	}
+            	//根据id加密，生成code
+            	req.models.process.update({id:result.id},{code_url:url}).exec(function(err,result){
+			        judge = 1;
+			        if (err) {
+			            judge = 2;
+			            req.flash('success', '二维码生成失败!');
+			        }else{
+			        	req.flash('success', '发布成功!');
+			        }
+			        return res.json({type: judge});
+			    });
             	
             }
-            res.json({type: judge});
+            
         });
 	},
 	updateProcessSeq: function(req,res){
