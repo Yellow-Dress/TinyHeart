@@ -79,7 +79,7 @@ router.get('/post',checkLogin);
 router.get('/post', function(req, res) {
 
     res.render('post', { 
-        title: '发布日记', 
+        title: '发布流程', 
         user: req.session.user,
         success: req.flash('success').toString(),
         error: req.flash('error').toString()

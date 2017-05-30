@@ -3,6 +3,10 @@ function changeCode() {
     $("#kaptchaImage").attr("src", "/captcha.png?rand=" + Math.random());
 }
 
+/**
+ * [adjustFin 调整状态s]
+ * @return {[type]} [description]
+ */
 function adjustFin() {
 	var adjustList = [];
     $('.adjust').attr('disabled', 'true');
@@ -27,11 +31,19 @@ function adjustFin() {
      });
 }
 
+/**
+ * [adjustSeq 调整按钮状态]
+ * @return {[type]} [description]
+ */
 function adjustSeq() {
     $('.adjust').removeAttr('disabled');
     $('.adjust-fin').css('display', 'inline-block');
 }
-
+/**
+ * [up 上移]
+ * @param  {[type]} obj [description]
+ * @return {[type]}     [description]
+ */
 function up(obj) {
     var objParentTR = $(obj).parent().parent();
     var prevTR = objParentTR.prev();
@@ -39,7 +51,11 @@ function up(obj) {
         prevTR.insertAfter(objParentTR);
     }
 }
-
+/**
+ * [down 下移]
+ * @param  {[type]} obj [description]
+ * @return {[type]}     [description]
+ */
 function down(obj) {
     var objParentTR = $(obj).parent().parent();
     var nextTR = objParentTR.next();
@@ -47,7 +63,11 @@ function down(obj) {
         nextTR.insertBefore(objParentTR);
     }
 }
-
+/**
+ * [deleteProcess 删除流程]
+ * @param  {[type]} id [流程ID]
+ * @return {[type]}    [description]
+ */
 function deleteProcess(id){
     var data = {
         'id': id

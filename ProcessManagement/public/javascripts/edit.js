@@ -18,14 +18,14 @@ function editProcess(){
          data: data,
          dataType: "json",
          success: function(data){
-             if(data.type==1){
-                 alert("修改成功");
-                 window.location.href = "/home";
-             }else{
-                 alert("修改失败");
-                 window.location.href = "/home";
-             }
-             
+             // if(data.type==1){
+             //     alert("修改成功");
+             //     window.location.href = "/home";
+             // }else{
+             //     alert("修改失败");
+             //     window.location.href = "/home";
+             // }
+             window.location.href = "/home";
          }
      });
 

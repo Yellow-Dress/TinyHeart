@@ -1,3 +1,14 @@
+var cryptoComm = require('../common/algorithm');
+
+function storeCodeUrl(req,res,id,url){
+	req.models.process.update({id:id},{code_url:url}).exec(function(err,result){
+        var judge = 1;
+        if (err) {
+            judge = 2;
+        }
+        return judge;
+    });
+};
 module.exports = {
 	pid: null,
 	getProcessList: function(req, res) {
@@ -38,6 +49,7 @@ module.exports = {
         });   
 	},
 	addProcess: function (req, res) {
+		//https://cli.im/api/qrcode/code?text=//cli.im&mhid=t0DBWAvmksghMHcsKdJQP68
 	    var judge = 1;
 	    var sequence = '0';
 	    var currentUser = req.session.user;
@@ -47,13 +59,21 @@ module.exports = {
 	    		content : req.body.content,
 	    		sequence : 0
 	    	};
+	    var url = '';
     	req.models.process.create(Process).exec(function(err,result){
             if (err) {
                 req.flash('error', err);
-                console.log('error'+err);
                 judge = 0;
+            }else {
+            	url = cryptoComm.encryptUrl(String(result.id));
+            	judge = storeCodeUrl(req,res,result.id,url);
+            	if(judge == 2){
+            		req.flash('success', '二维码生成失败!');
+            	}else{
+            		req.flash('success', '发布成功!');
+            	}
+            	
             }
-            req.flash('success', '发布成功!');
             res.json({type: judge});
         });
 	},
@@ -81,9 +101,10 @@ module.exports = {
                 req.flash('error', err);
                 console.log('error'+err);
                 judge = 0;
-            }
-            req.flash('success', '修改成功!');
-            res.json({type: judge});
+            }else {
+            	req.flash('success', '修改成功!');
+       		}
+            return res.json({type: judge});
         });
 	},
 	deleteProcess: function(req,res){
@@ -93,9 +114,10 @@ module.exports = {
                 req.flash('error', err);
                 console.log('error'+err);
                 judge = 0;
+            }else{
+            	req.flash('success', '删除成功!');
             }
-            req.flash('success', '删除成功!');
-            res.json({type: judge});
+            return res.json({type: judge});
 		});
 	}
 }

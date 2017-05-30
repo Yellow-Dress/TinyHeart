@@ -29,6 +29,9 @@ module.exports = Waterline.Collection.extend({
         },
         process_status:{
             type: 'integer'
+        },
+        code_url : {
+            type: 'string'
         }
     }
 });
