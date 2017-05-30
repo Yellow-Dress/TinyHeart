@@ -19,7 +19,7 @@ var wlconfig = {
             adapter: 'mysql',
             host: '60.205.220.42',
             user: 'root',
-            password: 'XiXiZuiMei12301128',
+            password: '****',
             chartset:'utf8',
             database:'db_node'
         },
