@@ -1,4 +1,5 @@
 var crypto = require('crypto');
+
 module.exports = {
     login: function(req,res){
         var email =  req.body.email;
@@ -70,8 +71,5 @@ module.exports = {
             });
 
         });
-    },
-    handleCode: function(req,res){
-        console.log(req.body.code);
     }
 }

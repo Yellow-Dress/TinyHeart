@@ -44,6 +44,7 @@ app.use(function(req, res, next){
     req.models = app.get('models');
     next();
   });
+app.use(require('express-promise')());
 
 app.use('/', index);
 app.use('/users', users);

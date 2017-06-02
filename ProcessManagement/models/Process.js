@@ -27,7 +27,8 @@ module.exports = Waterline.Collection.extend({
         process_name: {
             type: 'string'
         },
-        process_status:{
+        process_type:{
+            //0:默认 1:非默认
             type: 'integer'
         },
         code_url : {

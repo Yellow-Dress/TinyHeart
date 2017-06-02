@@ -3,6 +3,7 @@ var router = express.Router();
 var crypto = require('crypto');
 var UserController = require('../controllers/userController');
 var ProcessController = require('../controllers/processController');
+var StudentController = require('../controllers/studentController');
 var qr_image = require('qr-image');  
 
 /**
@@ -115,7 +116,7 @@ router.post('/deleteProcess',ProcessController.deleteProcess);
 /**
  * 扫描二维码对应事件
  */
-router.post('/handleCode',UserController.handleCode);
+router.get('/handleCode',StudentController.handleCode);
 
 /**
  * [生成二维码]
@@ -126,7 +127,7 @@ router.post('/handleCode',UserController.handleCode);
 router.get('/qrcode*',function(req,res){
     var code = req.query.code;
     console.log(code);
-    var host = 'sspku.lilingkun.com:3000';
+    var host = 'xixi.lilingkun.com:3000';
     var redirectUrl = "http://"+host+"/handleCode?codeurl="+code;
     var url = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx1d3765eb45497a18&redirect_uri='+redirectUrl+'&response_type=code&scope=snsapi_base&state=1#wechat_redirect';
     var temp_qrcode = qr_image.image(url); 
