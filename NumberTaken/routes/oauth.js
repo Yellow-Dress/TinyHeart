@@ -4,8 +4,8 @@ var router = express.Router();
 var request = require('request');
 
 /* 微信登陆 */
-var AppID = "wx00b2e3c441296c24";
-var AppSecret = "31fe10e23ebf87e46003f12cf2af46e0";
+var AppID = "wx0e94a9ed781a2ce8";
+var AppSecret = "73e39051ec2f07c0d20b39b8cfade946";
 router.get('/wx_login', function(req,res, next){
     //console.log("oauth - login")
 

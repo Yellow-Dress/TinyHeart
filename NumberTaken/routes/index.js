@@ -30,6 +30,7 @@ router.post('/signin',function(req,res){
         id = req.body.id,
         latitude = req.body.latitude,
         longitude = req.body.longitude;
+
     var newUser = new User({
         name : name,
         id : id,
@@ -45,6 +46,11 @@ router.post('/signin',function(req,res){
       //如果未填写ID和name
       if(!id||!name){
         message = -4
+      }else if (longitude<116.3491||longitude>116.3526||latitude<39.75685||latitude>39.75772) {
+        //定位不在学校
+        console.log('wrong location!');
+        message = -2;
+        
       }else if (!user) {
         //如果不存在则新增用户
         newUser.save(function (err, user) {

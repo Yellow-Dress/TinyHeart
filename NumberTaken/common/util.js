@@ -15,7 +15,7 @@ var request = require('request');
  * @param    req      
  */
 function getapiTicket(callback,res,req){
-	var apiTicket = 'kgt8ON7yVITDhtdwci0qeWuGDHT1lV2r96xhNURymc9qWbwmGa30rszLRWIeg0Jl9Qk2WfnAzXo8NvvztPrzXw';
+	var apiTicket = 'kgt8ON7yVITDhtdwci0qedQxZzQFBIsmu3Gk-8TtlAydCp-Pa3LrxwU5EKF_KOGqNeloZVMRZ4S3DSlN6VKJWA';
 	Ticket.get('wechat', function (err, ticket) {
         if (!ticket) {
           console.log('null');
@@ -33,7 +33,7 @@ function getapiTicket(callback,res,req){
  */
 function checkSignature(apiTicket,req){
 	var timestamp = Date.now();
-	var url = "http://pku.xixi.kkxixi.com:3000"+req.originalUrl;
+	var url = "http://jiangdongyu.space:3000"+req.originalUrl;
 	var key = ["jsapi_ticket="+apiTicket,"timestamp="+parseInt(timestamp/1000),"noncestr="+nonceStr,"url="+url].sort().join('&');
  	//调用sign方法获取签名
     var data = sign(apiTicket,url);

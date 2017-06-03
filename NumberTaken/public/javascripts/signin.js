@@ -20,6 +20,8 @@ function signIn() {
             $('#tips').html('该学号已签到');
           }else if(data.message == 0){ 
             $('#tips').html('签到成功');
+          }else if(data.message == -2){ 
+            $('#tips').html('请在学校范围内取号');
           }else if(data.message == -4){ 
             $('#tips').html('请输入姓名和学号');
           }else{

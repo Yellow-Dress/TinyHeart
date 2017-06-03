@@ -4,8 +4,8 @@
 var later = require("later");
 var https = require("https");
 
-var appid = "wx00b2e3c441296c24";
-var appsecret = "31fe10e23ebf87e46003f12cf2af46e0";
+var appid = "wx0e94a9ed781a2ce8";
+var appsecret = "73e39051ec2f07c0d20b39b8cfade946";
 var access_token;
 
 var Token = require('../models/tokens.js');
