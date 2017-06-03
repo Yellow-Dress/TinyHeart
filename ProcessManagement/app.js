@@ -32,6 +32,9 @@ app.use(session({
   secret: 'process session',
   cookie: {maxAge: 1000 * 60 * 60 * 24 * 7},//30 days
 }));
+
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
+
 app.use(flash());
 
 app.use(logger('dev'));

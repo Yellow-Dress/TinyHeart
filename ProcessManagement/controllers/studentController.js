@@ -99,8 +99,7 @@ function getStatus(request,response,callback){
             var body = JSON.parse(bodyChunks);
             if(body.errcode == 0){
                 student = body.data;
-                console.log(student);
-                callback(response,student);
+                callback(response,request,student);
             }else{
                 
                 console.dir('test:'+body);

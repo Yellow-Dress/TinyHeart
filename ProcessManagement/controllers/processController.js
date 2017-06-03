@@ -2,6 +2,16 @@ var cryptoComm = require('../common/algorithm');
 var StudentController = require('./studentController');
 
 var processList;
+function getStatusListById(req,res,studentid){
+    return req.models.status.find({studentid:studentid}).then(function(status){
+        if(status.length>0){
+            return status;
+        }else
+            return null;
+    }).catch(function (err) {
+        console.log('err');
+    }); 
+};
 function storeCodeUrl(req,res,id,url){
 	req.models.process.update({id:id},{code_url:url}).exec(function(err,result){
         var judge = 1;
@@ -11,13 +21,48 @@ function storeCodeUrl(req,res,id,url){
         return judge;
     });
 };
-function getStudent(res,data){
+
+function getStudent(res,req,data){
     console.log(data);
-    
-    res.render('mobileHome', { 
-        title: '流程列表', 
-        posts: processList
+    var studentid = data.studentid;
+    //资格审核状态23
+    var enrollcomplete = data.enrollcomplete;
+    //新生缴费状态24
+    var financecomplete = data.financecomplete;
+    //教务注册状态25
+    var jwbcomplete = data.jwbcomplete;
+
+    var statusList;
+
+    getStatusListById(req,res,studentid).then(function(data){
+        statusList = data;
+        console.log('test');
+        console.log(data);
+        //接口状态显示
+	    for(var process of processList){
+	    	if(process.id==23){
+	    		process.status = enrollcomplete;
+	    	}else if(process.id==24){
+	    		process.status = financecomplete;
+	    	}else if(process.id==25){
+	    		process.status = financecomplete;
+	    	}else if(statusList){ 
+	    		for(var status of statusList){
+	    			if(process.id == status.pid){
+	    				process.status = status.process_status;
+	    			}
+	    		}
+	    		
+        	}
+	    }
+        res.render('mobileHome', { 
+	        title: '流程列表', 
+	        student: studentid,
+	        posts: processList
+	    });
+        
     });
+      
 };
 
 module.exports = {
