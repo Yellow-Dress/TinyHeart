@@ -282,7 +282,7 @@ $(function () {
     }
 
     function init(){
-        preload();
+        // preload();
         fastClick();
         androidInputBugFix();
         setJSAPI();

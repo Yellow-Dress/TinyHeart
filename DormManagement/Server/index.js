@@ -11,6 +11,7 @@ var busboy = require('connect-busboy');
 var xlsx = require('xlsx');
 var log = require('./log.js');
 var async = require('async');
+var https = require('https');
 var logPath_bed = path.join(__dirname, 'dms_bed.log');
 var logPath_dorm = path.join(__dirname, 'dms_dorm.log');
 var logPath_student = path.join(__dirname, 'dms_student.log');
@@ -31,6 +32,8 @@ app.use(session({
     rolling: true,
     saveUninitialized: true
 }));
+
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0"
 
 app.all('*', function(req, res, next) {
 	res.header("Access-Control-Allow-Origin", "*");
@@ -259,7 +262,7 @@ app.post('/getDormInfo', function(req, res) {
 });
 
 
-app.post('/getStudentInfo', function(req, res) {
+app.post('/getStudentInfos', function(req, res) {
 	var studentInfoQuerySql = "SELECT * FROM student WHERE deleteBit=? ORDER BY studentNo",
 		studentInfoQuerySql_Params = [0];
 
@@ -820,6 +823,99 @@ app.post('/checkDormInfo', function(req, res) {
     });  
 });
 
+app.post('/fetchStudentInfo', function(req, res) {
+    var stuid = req.body.stuid;
+
+    var studentInfoQuerySql = "SELECT * FROM student WHERE studentNo=? AND deleteBit=?",
+        studentInfoQuerySql_Params = [stuid, 0];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(studentInfoQuerySql, studentInfoQuerySql_Params, function(err, result) {
+            connection.release();
+            if (err) {
+                console.log(err);
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+            
+            if (result.length > 0) {
+                res.send( {isConnect: true, isSuccess: true, studentInfo: result } );
+              
+            } else {
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+        });
+    });    
+});
+
+app.post('/fetchStudentDetail', function(req, res) {
+    var stuid = req.body.stuid;
+    var TOKEN = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    var responseText = "";
+
+    https.get("https://api.mysspku.com/index.php/V2/Ssbd/getinfo?stuid=" + stuid + "&token=" + TOKEN, (financeRes) => {
+        financeRes.on('data', (d) => {
+            responseText += d;
+        });
+
+        financeRes.on('end', () => {
+            var responseObj = JSON.parse(responseText);
+
+            if (responseObj.errcode == 0) {
+
+                if (responseObj.data.financecomplete == 1) {
+                    res.send({ isSuccess: true, student: responseObj.data });
+                } else {
+                    res.send({ isSuccess: false });
+                }
+            } else {
+                if (responseObj.errcode == 40001) {
+                    console.log('学生编号不存在。');
+                } else if (responseObj.errcode == 40901) {
+                    console.log('无效的token。');
+                }
+                res.send({ isSuccess: false});
+            }
+        });                                        
+    }).on('error', (e) => {
+        console.log('here')
+        res.send({ isSuccess: false});
+        console.error(e);
+    });
+
+});
+
+app.post('/checkOpenTime', function(req, res) {
+    var timeQuerySql = "SELECT * FROM time",
+        timeQuerySql_Params = ["openTime"];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(timeQuerySql, timeQuerySql_Params, function(err, result) {
+            connection.release();
+            if (err) {
+                console.log(err);
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+            
+            if (result.length > 0) {
+                res.send( {isConnect: true, isSuccess: true, time: result[0] } );
+              
+            } else {
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+        });
+    });     
+});
+
 function updateBedInfoByExcel(filePath) {
     // 一条条读，读一条，验证成功以对象形式加入数组；一旦有一条不成功，清空数组，写入Log；
     
@@ -1208,6 +1304,458 @@ function updateStudentInfoByExcel(filePath) {
         })
     })
 }
+
+app.post('/validateStudent', function(req, res) {
+    var code = req.body.code;
+
+    utils.getAccessToken().then(function(accountInfo) {
+        // console.log(accountInfo);
+
+        var responseText = "";
+
+        // 先验证是否进行企业号验证
+        https.get("https://qyapi.weixin.qq.com/cgi-bin/user/getuserinfo?access_token=" + accountInfo.access_token + "&code=" + code, (useridRes) => {
+
+            useridRes.on('data', (d) => {
+                responseText += d;
+            });
+
+            useridRes.on('end', () => {
+                var responseObj = JSON.parse(responseText);
+                console.log('verify_qiyi');
+                console.log(responseObj)
+                // TODO：测试模拟用，记得删除
+                responseObj.errcode = undefined;
+                responseObj.UserId = "1601210386";
+
+                if (responseObj.errcode != undefined) {
+                    res.send({ isSuccess: false });
+                } else {
+                    var UserId = responseObj.UserId;
+
+                    if (UserId == undefined) {
+                        res.send({ isValidate: false});
+                    } else {
+                        // 验证是否在可选宿舍名单中
+
+                        var studentInfoQuerySql = "SELECT * FROM student WHERE studentNo=? AND deleteBit=?",
+                            studentInfoQuerySql_Params = [UserId, 0];
+
+                        sqlPool.getConnection(function(err, connection) {
+                            if (err) {
+                                console.log(err);
+                                res.send( {isConnect: false} );
+                            }
+
+                            var sqlQuery = connection.query(studentInfoQuerySql, studentInfoQuerySql_Params, function(err, result) {
+                                connection.release();
+                                if (err) {
+                                    console.log(err);
+                                    res.send( {isConnect: false} );
+                                }
+                                
+                                // 在名单之中
+                                if (result.length > 0) {
+                                    // res.send( {isSuccess: true} );
+
+                                    var TOKEN = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+                                    var responseText = "";
+
+                                    https.get("https://api.mysspku.com/index.php/V2/Ssbd/getinfo?stuid=" + UserId + "&token=" + TOKEN, (financeRes) => {
+                                        financeRes.on('data', (d) => {
+                                            responseText += d;
+                                        });
+
+                                        financeRes.on('end', () => {
+                                            var responseObj = JSON.parse(responseText);
+                                            console.log(responseObj)
+                                            if (responseObj.errcode == 0) {
+                                                console.log('not error')
+                                                if (responseObj.data.financecomplete == 1) {
+                                                    res.send({ isValid: true, stuid: UserId });
+                                                } else {
+                                                    res.send({ isValid: false });
+                                                }
+                                            } else {
+                                                if (responseObj.errcode == 40001) {
+                                                    console.log('学生编号不存在。');
+                                                } else if (responseObj.errcode == 40901) {
+                                                    console.log('无效的token。');
+                                                }
+                                                res.send({ isSuccess: false});
+                                            }
+                                        });                                        
+                                    }).on('error', (e) => {
+                                        console.log('here')
+                                        res.send({ isSuccess: false});
+                                        console.error(e);
+                                    });;
+                                } else {
+                                    res.send({ isValid: false });
+                                }
+                                
+
+                            });
+                        });                           
+                        // res.send({ isSuccess: true, isValidate: true});
+                    }
+                }
+
+            });
+            
+        }).on('error', (e) => {
+            res.send({ isSuccess: false});
+            console.error(e);
+        });
+    })
+});
+
+// 校验同行人真实性
+app.post('/validatePartner', function(req, res) {
+    var stuid = req.body.stuid,
+        code = req.body.code,
+        sex = req.body.sex;
+
+    // 是否已经分配
+    var bedInfoQuerySql = "SELECT * FROM bed WHERE studentNo=? AND deleteBit=?",
+        bedInfoQuerySql_Params = [stuid, 0];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send(  {errcode: 4001, msg: "数据库连接错误。"} );
+        }
+
+        var sqlQuery = connection.query(bedInfoQuerySql, bedInfoQuerySql_Params, function(err, result) {
+            connection.release();
+            if (err) {
+                console.log(err);
+                res.send( {errcode: 4001, msg: "数据库连接错误。"} );
+            }
+        
+            if (result.length > 0) {
+                res.send(  {errcode: 4003, msg: "添加失败，该同学已办理过住宿"} );       
+            } else {
+ 
+                // 校验是否在数据库名单中，及校验码准确性
+                var studentQuerySql = "SELECT * FROM student WHERE studentNo=? AND deleteBit=?",
+                    studentQuerySql_Params = [stuid, 0];
+
+                sqlPool.getConnection(function(err, connection) {
+                    if (err) {
+                        console.log(err);
+                        res.send(  {errcode: 4001, msg: "数据库连接错误。"} );
+                    }
+
+                    var sqlQuery = connection.query(studentQuerySql, studentQuerySql_Params, function(err, result) {
+                        connection.release();
+                        if (err) {
+                            console.log(err);
+                            res.send( {errcode: 4001, msg: "数据库连接错误。"} );
+                        }
+                    
+                        if (result.length > 0) {
+                            if (result[0].code != code) {
+                                res.send(  {errcode: 4004, msg: "添加失败，同住人校验码错误"} );
+                            } else {
+                                 // 校验是否缴费及性别
+                                var TOKEN = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+                                var responseText = "";
+
+                                https.get("https://api.mysspku.com/index.php/V2/Ssbd/getinfo?stuid=" + stuid + "&token=" + TOKEN, (financeRes) => {
+                                    financeRes.on('data', (d) => {
+                                        responseText += d;
+                                    });
+
+                                    financeRes.on('end', () => {
+                                        var responseObj = JSON.parse(responseText);
+                                        console.log(responseObj)
+                                        if (responseObj.errcode == 0) {
+                                            if (responseObj.data.financecomplete == 1) {
+                                                if (responseObj.data.gender != sex) {
+                                                    res.send(  {errcode: 4007, msg: "添加失败，男女不可同住"} );
+                                                } else {
+                                                    res.send(  {isSuccess: true, studentName: responseObj.data.name} );
+                                                }
+                                            } else {
+                                                res.send(  {errcode: 4004, msg: "添加失败，该同学尚未缴纳住宿费"} );
+                                            }
+                                        } else {
+                                            if (responseObj.errcode == 40001) {
+                                                // console.log('学生编号不存在。');
+                                                res.send(  {errcode: 4005, msg: "添加失败，该学号不存在" } );
+                                            } else if (responseObj.errcode == 40901) {
+                                                console.log('无效的token。');
+                                                res.send(  {errcode: 4006, msg: "添加失败，请联系管理员" } );
+                                            }
+                                            
+                                        }
+                                    });                                        
+                                }).on('error', (e) => {
+                                    console.error(e);
+                                    res.send(  {errcode: 4006, msg: "添加失败，请联系管理员" } );
+                                });                            
+                            }                        
+                        } else {
+                            res.send(  {errcode: 4002, msg: "添加失败，该同学没有资格办理住宿"} );
+                        }
+                    });
+                });  
+
+   
+
+            }
+        });
+    }); 
+
+
+});
+
+// 获取空房状态
+app.post('/getAvailableDormStatus', function(req, res) {
+    var sex = req.body.sex;
+
+    var preData = {
+        max5: 0, // 以total来记
+        max13: 0,
+        max14: 0,
+        building5: [], // 5号楼，剩余1床位房间1个，剩余2床位房间0个
+        building13: [],
+        building14: []
+    }
+
+    // var preData = {
+    //     errcode: 4001,
+    //     msg: ""
+    // }
+
+    sex == '男' ? sex = 1 : sex = 0;
+
+    var totalBed = [],
+        availableBed = [];
+    
+    var totalBedQuerySql = "SELECT buildingNo, roomNo, count(bedNo) sum FROM bed WHERE sex=? GROUP BY roomNo ORDER BY buildingNo, roomNo",
+        totalBedQuerySql_Params = [sex];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {errcode: 4001, msg: "数据库连接错误。"} );
+        }
+
+        var sqlQuery = connection.query(totalBedQuerySql, totalBedQuerySql_Params, function(err, result) {
+            connection.release();
+            if (err) {
+                console.log(err);
+                res.send( {errcode: 4001, msg: "数据库连接错误。"} );
+            }
+            
+            totalBed = result;
+
+            totalBed.forEach(function(elem) {
+                switch(elem.buildingNo) {
+                    case 5: 
+                        if (elem.sum > preData.max5)
+                            preData.max5 = elem.sum;
+                        break;
+                    case 13:
+                        if (elem.sum > preData.max13)
+                            preData.max13 = elem.sum;
+                        break;
+                    case 14:
+                        if (elem.sum > preData.max14)
+                            preData.max14 = elem.sum;
+                        break;
+                }            
+            });
+
+            var availableBedQuerySql = "SELECT buildingNo, roomNo, count(bedNo) available FROM bed WHERE status=? AND usable=? AND sex=? AND roomNo IN (SELECT roomNo FROM dorm) GROUP BY roomNo ORDER BY buildingNo, roomNo",
+                availableBedQuerySql_Params = [0, 1, sex];
+
+            sqlPool.getConnection(function(err, connection) {
+                if (err) {
+                    console.log(err);
+                    res.send( {errcode: 4001, msg: "数据库连接错误。"} );
+                }
+
+                var sqlQuery = connection.query(availableBedQuerySql, availableBedQuerySql_Params, function(err, result) {
+                    connection.release();
+                    if (err) {
+                        console.log(err);
+                        res.send( {errcode: 4001, msg: "数据库连接错误。"} );
+                    }
+                    
+                    availableBed = result;
+
+                    for (var i = 0; i < preData.max5; i++) {
+                        preData.building5.push(0);
+                    }
+
+                    for (var i = 0; i < preData.max13; i++) {
+                        preData.building13.push(0);
+                    }
+                    
+                    for (var i = 0; i < preData.max14; i++) {
+                        preData.building14.push(0);
+                    }
+
+                    availableBed.forEach(function(elem) {
+                        switch(elem.buildingNo) {
+                            case 5:
+                                preData.building5[elem.available - 1]++;
+                                break;
+                            case 13:
+                                preData.building13[elem.available - 1]++;
+                                break;
+                            case 14:
+                                preData.building14[elem.available - 1]++;
+                                break;
+                        }
+                    });
+
+                    res.send({ isSuccess: true, status: preData})
+
+                });
+            });              
+
+        });
+    });  
+});
+
+app.post('/confirmDistribute', function(req, res) {
+    var buildingNo = req.body.buildingNo,
+        sex = req.body.sex,
+        students = req.body.students;
+
+    console.log(students)
+
+    var availableBedQuerySql = "SELECT buildingNo, roomNo, count(bedNo) available FROM bed WHERE buildingNo=? AND status=? AND usable=? AND sex=? AND roomNo IN (SELECT roomNo FROM dorm) GROUP BY roomNo ORDER BY buildingNo, roomNo",
+        availableBedQuerySql_Params = [buildingNo, 0, 1, sex];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {errcode: 4001, msg: "数据库连接错误。"} );
+        }
+
+        var sqlQuery = connection.query(availableBedQuerySql, availableBedQuerySql_Params, function(err, result) {
+            connection.release();
+            if (err) {
+                console.log(err);
+                res.send( {errcode: 4001, msg: "数据库连接错误。"} );
+            }
+            
+            if (result.length > 0) {
+                var targetRoomNo = '';
+
+                for (var i = 0; i < result.length; i++) {
+                    var elem = result[i];
+                    if (elem.available >= students.length)   {
+                        // 人数满足要求
+                        targetRoomNo = elem.roomNo;
+                        break;
+                    }
+                }
+
+                if (targetRoomNo == '') {
+                     res.send( {errcode: 4002, msg: "该宿舍楼已无满足人数条件的宿舍。请选择其他宿舍楼，或重新分配同住人。"} );
+                     return;
+                }
+                
+                console.log(targetRoomNo);
+
+                var bedInfoQuerySql = "SELECT * FROM bed WHERE buildingNo=? AND roomNo=? AND usable=? AND status=? AND deleteBit=?",
+                    bedInfoQuerySql_Params = [buildingNo, targetRoomNo, 1, 0, 0];
+
+                sqlPool.getConnection(function(err, connection) {
+                    if (err) {
+                        console.log(err);
+                        res.send( {errcode: 4001, msg: "数据库连接错误。"} );
+                    }
+
+                    var sqlQuery = connection.query(bedInfoQuerySql, bedInfoQuerySql_Params, function(err, result) {
+                        connection.release();
+                        if (err) {
+                            console.log(err);
+                            res.send( {errcode: 4001, msg: "数据库连接错误。"} );
+                        }
+
+                        if (result.length < students.length) {
+                            res.send( {errcode: 4002, msg: "该宿舍楼已无满足人数条件的宿舍。请选择其他宿舍楼，或重新分配同住人。"} );
+                        } else {
+                            var beds = result,
+                                bedIndex = 0;
+
+                            async.eachSeries(students, function(item, callback) {
+                                var bedInfoUpdateSql = "UPDATE bed SET studentNo=?, studentName=?, status=? WHERE buildingNo=? AND roomNo=? AND bedNo=? AND deleteBit=?",
+                                    bedInfoUpdateSql_Params = [item.studentNo, item.studentName, 1, buildingNo, targetRoomNo, beds[bedIndex].bedNo, 0];
+
+                                sqlPool.getConnection(function(err, connection) {
+                                    if (err) {
+                                        callback(err);
+                                        console.log(err);
+                                    }
+
+                                    var sqlQuery = connection.query(bedInfoUpdateSql, bedInfoUpdateSql_Params, function(err, result) {
+                                        connection.release();
+                                        if (err) {
+                                            callback(err);
+                                            console.log(err);                                       
+                                        }
+
+                                        bedIndex++;
+                                        callback();
+
+                                    });
+                                });                                 
+                            }, function(err) {
+                                if (err) {
+                                    console.log(err);
+                                    res.send( {errcode: 4003, msg: "分配失败，请重试"} );
+                                }
+
+                                res.send( { isSuccess: true} );
+                            });
+                        }
+                    });
+                });  
+
+            } else {
+                // 没有满足条件的宿舍
+                res.send( {errcode: 4002, msg: "该宿舍楼已无满足人数条件的宿舍。请选择其他宿舍楼，或重新分配同住人。"} );
+            }
+
+        });
+    });        
+});
+
+app.post('/checkStudentStatus', function(req, res) {
+    var stuid = req.body.stuid;
+
+    var bedInfoQuerySql = "SELECT * FROM bed WHERE studentNo=? AND deleteBit=?",
+        bedInfoQuerySql_Params = [stuid, 0];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(bedInfoQuerySql, bedInfoQuerySql_Params, function(err, result) {
+            connection.release();
+            if (err) {
+                console.log(err);
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+
+            if (result.length > 0) {
+                res.send( {isConnect: true, isSuccess: true, dormStatus: result[0] } );
+            } else {
+                res.send( {isConnect: true, isSuccess: true } );
+            }
+        });
+    });    
+});
 
 function validateBedInfo(bedInfoObj, recordCount) {
 

@@ -35,7 +35,7 @@ Zepto(function($){
 
                 $.ajax({  
                     type: 'POST',
-                    url: 'http://localhost:4000/getStudentInfo',
+                    url: 'http://localhost:4000/getStudentInfos',
                     dataType: 'json',
                     success: function(data){
                         if (data.isConnect == false) {
