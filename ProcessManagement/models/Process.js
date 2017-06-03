@@ -13,10 +13,12 @@ module.exports = Waterline.Collection.extend({
             autoIncrement: true
         },
         title: {
-            type: 'string'
+            type: 'string',
+            required: true,
+            maxLength: 20
         },        
         content: {
-            type: 'string'
+            type: 'text'
         },
         user_name: {
             type: 'string'

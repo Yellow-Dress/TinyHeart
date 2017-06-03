@@ -48,6 +48,7 @@
                       <th>调整</th>
                       <th class="display-none">流程ID</th>
                       <th>标题</th>
+                      <th>默认</th>
                       <th>二维码</th>
                       <th>操作</th>
                     </tr>
@@ -61,10 +62,17 @@
                           </td>
                           <td class="display-none"><%= post.id %></td>
                           <td><a href="/detail?id=<%= post.id %>"><%= post.title %></a></td>
+                          <td>
+                            <% if (!post.process_type) { %> 是 <% } %>
+                            <% if (post.process_type) { %> 否 <% } %>
+                          </td>
                           <td><button class="btn btn-danger btn-xs" type="button" data-toggle="modal" data-target="#myModal" onclick="seeCode('<%= post.code_url%>')">查看</button></td>
                           <td>
                             <a href="/edit?id=<%= post.id %>" target="_blank"><button type="button" class="btn btn-success btn-xs"> 修 改 </button></a> &nbsp;
-                            <button type="button" class="btn btn-danger btn-xs" onclick="deleteProcess(<%= post.id %>)"> 删 除 </button> &nbsp;
+                            <% if (post.process_type) { %>
+                              <button type="button" class="btn btn-danger btn-xs" onclick="deleteProcess(<%= post.id %>)"> 删 除 </button> &nbsp; 
+                            <% } %>
+                            
                            
                           </td>
                         </tr>

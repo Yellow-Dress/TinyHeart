@@ -1,5 +1,7 @@
 var cryptoComm = require('../common/algorithm');
+var StudentController = require('./studentController');
 
+var processList;
 function storeCodeUrl(req,res,id,url){
 	req.models.process.update({id:id},{code_url:url}).exec(function(err,result){
         var judge = 1;
@@ -9,23 +11,39 @@ function storeCodeUrl(req,res,id,url){
         return judge;
     });
 };
+function getStudent(res,data){
+    console.log(data);
+    
+    res.render('mobileHome', { 
+        title: '流程列表', 
+        posts: processList
+    });
+};
+
 module.exports = {
 	pid: null,
-	getProcessList: function(req, res) {
+	getProcessList: function(req, res,from) {
 	    var allPosts = [];
-	    req.models.process.find({user_name:req.session.user.user_name})
-	    .sort('sequence')
-	    .exec(function(err, process){
-            //console.log(process);
-
-            res.render('home', { 
-	            title: '主页', 
-	            user: req.session.user,
-	            posts: process,
-	            success: req.flash('success').toString(),
-	            error: req.flash('error').toString()
+	    if(from == 'web'){
+	    	req.models.process.find({user_name:req.session.user.user_name})
+		    .sort('sequence')
+		    .exec(function(err, process){
+	            res.render('home', { 
+		            title: '主页', 
+		            user: req.session.user,
+		            posts: process,
+		            success: req.flash('success').toString(),
+		            error: req.flash('error').toString()
+		        });             
+	        });   
+	    }else{
+	    	req.models.process.find()
+		    .sort('sequence')
+		    .exec(function(err, process){
+		    	processList = process;
+		    	StudentController.getStudentProcessStatus(req,res,getStudent); 	            
 	        }); 
-        });   
+	    }  
 	},
 	getProcessDetailById: function(req, res, from) {
 	    console.log(req.query.id);
@@ -36,16 +54,23 @@ module.exports = {
             if(err){
 	            process = [];
 	        }
-	        if(from == 'detail'){
-	        	title = '流程详情';
-	        }else pid = req.query.id;
-            res.render(from, { 
-	            title: title, 
-	            user: req.session.user,
-	            post: process,
-	            success: req.flash('success').toString(),
-	            error: req.flash('error').toString()
-	        }); 
+	        if(from == 'mobile'){
+	        	res.render('mobileDetail', { 
+		            title: '流程详情', 
+		            post: process		        
+		        }); 
+	        }else{
+		        if(from == 'detail'){
+		        	title = '流程详情';
+		        }else pid = req.query.id;
+	            res.render(from, { 
+		            title: title, 
+		            user: req.session.user,
+		            post: process,
+		            success: req.flash('success').toString(),
+		            error: req.flash('error').toString()
+		        }); 
+	        }
         });   
 	},
 	addProcess: function (req, res) {
@@ -56,6 +81,7 @@ module.exports = {
 	    		user_name : currentUser.user_name,
 	    		title : req.body.title,
 	    		content : req.body.content,
+	    		process_type : req.body.type,
 	    		sequence : 0
 	    	};
 	    var url = '';

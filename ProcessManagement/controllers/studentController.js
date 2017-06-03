@@ -1,8 +1,10 @@
 var https = require("https");
+var cryptoComm = require('../common/algorithm');
 
 var TokenController = require('./tokenController');
 var access_token = '';
 var studentId = '';
+var student;
 /**
  * [getStudentId 获取用户学号]
  * @param  {[type]} request     [description]
@@ -11,7 +13,7 @@ var studentId = '';
  * @param  {[type]} encryptCode [加密后的ID]
  * @return {[type]}             [description]
  */
-function getStudentId(request,response,code,encryptCode){
+function getStudentId(request,response,code,encryptCode,type,callback){
     var options = {
         hostname : "qyapi.weixin.qq.com",
         path : "/cgi-bin/user/getuserinfo?access_token=" + access_token + '&code=' + code
@@ -28,11 +30,20 @@ function getStudentId(request,response,code,encryptCode){
             var body = JSON.parse(bodyChunks);
             if(body.UserId){
                 studentId = body.UserId;
-                changeStatus(request,response,encryptCode,0);
+                if(type=='one'){
+                    changeStatus(request,response,encryptCode,0);
+                }else if(type=='list'){
+                    getStatus(request,response,callback);
+                }
                 console.log(studentId);
             }else{
                 //当学号读取失败，重新读取数据库中的access token
-                getAccessToken(request,response,code,encryptCode,1);
+                if(type=='one'){
+                    getAccessToken(request,response,code,encryptCode,1,callback);
+                }else if(type=='list'){
+
+                }
+                
                 console.dir(body);
                 
             }
@@ -46,6 +57,7 @@ function getStudentId(request,response,code,encryptCode){
 
 function changeStatus(req,res,encryptCode,type){
     console.log(type);
+    var id = cryptoComm.decryptUrl(encryptCode);
     if(!type){
         res.render('processSuccess', { 
             title: '流程确认成功', 
@@ -65,6 +77,44 @@ function changeStatus(req,res,encryptCode,type){
      
 };
 
+function tipPage(res,req){
+
+}
+
+function getStatus(request,response,callback){
+    var token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    var options = {
+        hostname : "api.mysspku.com",
+        path : "/index.php/V2/Ssbd/getinfo?stuid="+ studentId +"&token=" + token
+    };
+    console.log('getStatus:'+studentId);
+    //根据options获取信息
+    var req = https.get(options,function(res){
+        var bodyChunks = '';
+        res.on('data',function(chunk){
+            bodyChunks += chunk;
+        });
+        res.on('end',function(){
+            //解析数据
+            var body = JSON.parse(bodyChunks);
+            if(body.errcode == 0){
+                student = body.data;
+                console.log(student);
+                callback(response,student);
+            }else{
+                
+                console.dir('test:'+body);
+                
+            }
+        });
+    });
+
+    req.on('error',function(e){
+        console.log('Error: ' + e.message);
+    });
+}
+
+
 /**
  * [getAccessToken 从数据库中读取access token]
  * @param  {[type]} req         [description]
@@ -74,10 +124,10 @@ function changeStatus(req,res,encryptCode,type){
  * @param  {[type]} type        [0初始 1存在access token]
  * @return {[type]}             [description]
  */
-function getAccessToken(req,res,code,encryptCode,type){
+function getAccessToken(req,res,code,encryptCode,type,from,callback){
     TokenController.findAccessToken(req).then(function(data){
         access_token = data;
-        if(!type){ getStudentId(req,res,code,encryptCode); }
+        if(!type){ getStudentId(req,res,code,encryptCode,from,callback); }
         else{
             //当access token失效 或 用户刷新页面导致code实效
             changeStatus(req,res,encryptCode,1)
@@ -94,7 +144,18 @@ module.exports = {
             getAccessToken(req,res,code,encryptCode,0);
         }else{
             //如果有 则直接读取学号
-            getStudentId(req,res,code,encryptCode);
+            getStudentId(req,res,code,encryptCode,'one');
+        }
+    },
+    getStudentProcessStatus: function(req,res,callback){
+        var code = req.query.code;
+        var encryptCode = req.query.codeUrl;
+        //当access token不存在时，去数据库中读取
+        if(access_token.length<=0){
+            getAccessToken(req,res,code,encryptCode,0,'list',callback);
+        }else{
+            //如果有 则直接读取学号
+            getStudentId(req,res,code,encryptCode,'list',callback);
         }
     }
 }

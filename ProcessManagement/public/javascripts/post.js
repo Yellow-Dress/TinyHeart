@@ -1,24 +1,32 @@
 var ue = UE.getEditor('editor');
 $("#sendBtn").click(function(){
-            
+    var type = 1;
+    var title = $("#title").val();
+    var content = UE.getEditor('editor').getContent();
+    //输入校验
+    var judge = 1;
+    if(title.length<=0||content.length<=0){
+        judge = 0;
+    }
+    //判断是否选中，未选中为1 选中为0
+    if($('#type').is(':checked')){
+        type = 0;
+    }     
     var data = {
-        title: $("#title").val(),
-        content: UE.getEditor('editor').getContent()
-    };             
-    $.ajax({
-         type: "post",
-         url: "/postProcess",
-         data: data,
-         dataType: "json",
-         success: function(data){
-             // if(data.type!=0){
-             //     alert("发布成功");
-             //     window.location.href = "/home";
-             // }else{
-             //     alert("发布失败");
-             //     window.location.href = "/home";
-             // }
-             window.location.href = "/home";
-         }
-     });
+        'title': title,
+        'content': content,
+        'type': type
+    };  
+    if(judge){
+       $.ajax({
+            type: "post",
+            url: "/postProcess",
+            data: data,
+            dataType: "json",
+            success: function(data){
+                window.location.href = "/home";
+            }
+        }); 
+    }
+    
 });

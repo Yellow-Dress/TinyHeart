@@ -64,7 +64,9 @@ console.log('Web server started.\n http:\\\\127.0.0.1:8181\\captcha.png');
  * 主页
  */
 router.get('/home',checkLogin);
-router.get('/home', ProcessController.getProcessList);
+router.get('/home', function(req,res){
+    ProcessController.getProcessList(req,res,'web');
+});
 
 /**
  * 流程详情页
@@ -74,6 +76,18 @@ router.get('/detail*', function(req,res){
     ProcessController.getProcessDetailById(req,res,'detail');
 });
 
+/**
+ * [移动端]
+ * @param  {[type]} req    [description]
+ * @param  {[type]} res){                 ProcessController.getProcessList(req,res,'mobile');} [description]
+ * @return {[type]}        [description]
+ */
+router.get('/mobileHome',function(req,res){
+    ProcessController.getProcessList(req,res,'mobile');
+});
+router.get('/mobileDetail*', function(req,res){
+    ProcessController.getProcessDetailById(req,res,'mobile');
+});
 /**
  * 添加流程页
  */

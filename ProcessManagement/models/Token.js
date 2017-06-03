@@ -13,6 +13,12 @@ module.exports = Waterline.Collection.extend({
         },
         access_token : {
             type: 'string'
+        },
+        corpid : {
+            type: 'string'
+        },
+        corpsecret : {
+            type: 'string'
         }
     }
 });
