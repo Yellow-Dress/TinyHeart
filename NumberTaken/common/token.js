@@ -4,9 +4,9 @@
 var later = require("later");
 var https = require("https");
 
-var appid = "wx0e94a9ed781a2ce8";
-var appsecret = "73e39051ec2f07c0d20b39b8cfade946";
-var access_token;
+var corpid = "wx1d3765eb45497a18";
+var corpsecret = "QEr6U8_nqdz9zlo4SsXtmy8JNWuYVlIDT76VisdwTCkAjgw280jdcPEKN98fgkd4";
+var access_token = '';
 
 var Token = require('../models/tokens.js');
 var Ticket = require('../models/tickets.js');
@@ -33,8 +33,8 @@ setTimeout(getAccessToken,2000);
 function getAccessToken(){
 	console.log(new Date());
 	var options = {
-		hostname : "api.weixin.qq.com",
-		path : "/cgi-bin/token?grant_type=client_credential&appid=" + appid + '&secret=' + appsecret
+		hostname : "qyapi.weixin.qq.com",
+		path : "/cgi-bin/gettoken?corpid=" + corpid + '&corpsecret=' + corpsecret
 	};
 	//根据options获取信息
 	var req = https.get(options,function(res){
@@ -67,8 +67,8 @@ function getAccessToken(){
 function apiTicket(access_token){
 	console.log("test: "+access_token);
 	var options = {
-		hostname : "api.weixin.qq.com",
-		path : "/cgi-bin/ticket/getticket?access_token=" + access_token + '&type=jsapi'
+		hostname : "qyapi.weixin.qq.com",
+		path : "/cgi-bin/get_jsapi_ticket?access_token=" + access_token
 	};
 	var req = https.get(options,function(res){
 		var bodyChunks = '';
@@ -97,7 +97,7 @@ function saveAccessToken(access_token){
         if (err) {
           console.log('Error: ' + err.message);
         }
-        console.log(token);
+        console.log(access_token);
     });
 }
 /**

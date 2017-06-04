@@ -10,27 +10,15 @@
     <link href="stylesheets/ie10-viewport-bug-workaround.css" rel="stylesheet">
     <!-- Custom styles for this template -->
     <link href="stylesheets/signin.css" rel="stylesheet">
+    <link href="stylesheets/example.css" rel="stylesheet">
     <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
     <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
     <script src="javascripts/ie-emulation-modes-warning.js"></script>
 </head>
 
-<body>
-    <form class="form-signin" method="post">
+<body ontouchstart>
+<div class="container" id="container">
     <div class="weui-cells weui-cells_form">
-        <div class="weui-cell">
-            <div class="weui-cell__hd"><label class="weui-label">姓名</label></div>
-            <div class="weui-cell__bd">
-                <input class="weui-input" id="inputName" name="name" type="text" placeholder="请输入姓名"/>
-            </div>
-        </div>
-        <div class="weui-cell">
-            <div class="weui-cell__hd"><label class="weui-label">学号</label></div>
-            <div class="weui-cell__bd">
-                <input class="weui-input" id="inputID" name="id" type="number" placeholder="请输入学号"/>
-            </div>
-        </div>
-        <br/>
         <div class=class="weui-btn-area">
              <a href="javascript:;" class="weui-btn weui-btn_primary" onclick="signIn()">取号</a>
         </div>
@@ -43,7 +31,7 @@
             经度：<span id="longitude" class="label label-success"></span>
         </div>
     </div>
-    </form>
+</div>
     <!-- /container -->
     <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
     <script src="javascripts/ie10-viewport-bug-workaround.js"></script>
@@ -57,7 +45,7 @@
         var nonceStr = '<%=nonceStr%>';
         wx.config({
             debug: true, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
-            appId: 'wx0e94a9ed781a2ce8', // 必填，公众号的唯一标识
+            appId: 'wx1d3765eb45497a18', // 必填，公众号的唯一标识
             timestamp: timestamp, // 必填，生成签名的时间戳
             nonceStr: nonceStr, // 必填，生成签名的随机串
             signature: signature,// 必填，签名，见附录1

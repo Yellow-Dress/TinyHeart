@@ -17,13 +17,12 @@ function signIn() {
           $('#tips').css('display','true');
           //根据回传的信息值，在页面打印出不同的反馈
           if(data.message == -1){ 
-            $('#tips').html('该学号已签到');
+            $('#tips').html('该学号已取号');
           }else if(data.message == 0){ 
             $('#tips').html('签到成功');
+            window.location.href='/info';
           }else if(data.message == -2){ 
             $('#tips').html('请在学校范围内取号');
-          }else if(data.message == -4){ 
-            $('#tips').html('请输入姓名和学号');
           }else{
             $('#tips').html('签到失败');
           }

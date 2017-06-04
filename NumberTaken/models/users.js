@@ -3,6 +3,7 @@ var mongodb = require('./db');
 function User(user) {
   this.id = user.id;
   this.name = user.name;
+  this.number = user.number;
   this.latitude = user.latitude;
   this.longitude = user.longitude;
 };
@@ -15,6 +16,7 @@ User.prototype.save = function(callback) {
   var user = {
       id: this.id,
       name: this.name,
+      number:this.number,
       latitude: this.latitude,
       longitude: this.longitude,
   };
@@ -48,6 +50,7 @@ User.prototype.updateData = function (callback) {
   var user = {
       id: this.id,
       name: this.name,
+      number:this.number,
       latitude: this.latitude,
       longitude: this.longitude,
   };
@@ -64,7 +67,7 @@ User.prototype.updateData = function (callback) {
       }
 
       var whereData = {"id":user.id};
-      var updateDat = {$set: {"name":user.name,"latitude":user.latitude,"longitude":user.longitude}}; //如果不用$set，替换整条数据
+      var updateDat = {$set: {"name":user.name,"number":user.number,"latitude":user.latitude,"longitude":user.longitude}}; //如果不用$set，替换整条数据
       
       //将用户数据插入 users 集合
       collection.update(whereData, updateDat, function (err, user) {
