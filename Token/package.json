@@ -1,0 +1,18 @@
+{
+  "name": "token",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "later": "^1.2.0",
+    "mysql": "^2.13.0",
+    "sails-mongo": "^0.12.2",
+    "sails-mysql": "^0.11.5",
+    "waterline": "^0.11.11"
+  }
+}
