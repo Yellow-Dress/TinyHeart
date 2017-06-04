@@ -2,9 +2,11 @@ var https = require("https");
 var cryptoComm = require('../common/algorithm');
 
 var TokenController = require('./tokenController');
+var StatusController = require('./statusController');
 var access_token = '';
 var studentId = '';
 var student;
+var processOne;
 /**
  * [getStudentId 获取用户学号]
  * @param  {[type]} request     [description]
@@ -33,7 +35,7 @@ function getStudentId(request,response,code,encryptCode,type,callback){
                 if(type=='one'){
                     changeStatus(request,response,encryptCode,0);
                 }else if(type=='list'){
-                    getStatus(request,response,callback);
+                    StatusController.getStatus(request,response,type,studentId,callback);
                 }
                 console.log(studentId);
             }else{
@@ -43,9 +45,9 @@ function getStudentId(request,response,code,encryptCode,type,callback){
                 }else if(type=='list'){
 
                 }
-                
+
                 console.dir(body);
-                
+
             }
         });
     });
@@ -55,63 +57,74 @@ function getStudentId(request,response,code,encryptCode,type,callback){
     });
 };
 
-function changeStatus(req,res,encryptCode,type){
-    console.log(type);
-    var id = cryptoComm.decryptUrl(encryptCode);
-    if(!type){
-        res.render('processSuccess', { 
-            title: '流程确认成功', 
-            user: studentId,
-            //process: process,
-            success: req.flash('success').toString(),
-            error: req.flash('error').toString()
-        }); 
-    }else{
-        res.render('processFail', { 
-            title: '流程确认失败', 
-            //process: process,
-            success: req.flash('success').toString(),
-            error: req.flash('error').toString()
+function getStudent(res,req,data,type){
+    var studentid = data.studentid;
+    //资格审核状态23
+    var enrollcomplete = data.enrollcomplete;
+    //新生缴费状态24
+    var financecomplete = data.financecomplete;
+    //教务注册状态25
+    var jwbcomplete = data.jwbcomplete;
+    if(processOne.id==23){
+        processOne.status = enrollcomplete;
+    }else if(processOne.id==24){
+        processOne.status = financecomplete;
+    }else if(processOne.id==25){
+        processOne.status = financecomplete;
+    }
+
+    if(type == 'one'){
+        res.render('mobileDetail', { 
+            title: '流程确认', 
+            post: processOne,
+            student: studentid,
+            type: 'confirm'             
         }); 
     }
-     
+      
 };
-
-function tipPage(res,req){
-
-}
-
-function getStatus(request,response,callback){
-    var token = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    var options = {
-        hostname : "api.mysspku.com",
-        path : "/index.php/V2/Ssbd/getinfo?stuid="+ studentId +"&token=" + token
-    };
-    console.log('getStatus:'+studentId);
-    //根据options获取信息
-    var req = https.get(options,function(res){
-        var bodyChunks = '';
-        res.on('data',function(chunk){
-            bodyChunks += chunk;
-        });
-        res.on('end',function(){
-            //解析数据
-            var body = JSON.parse(bodyChunks);
-            if(body.errcode == 0){
-                student = body.data;
-                callback(response,request,student);
+function getProcessDetailByCode(req, res, id, studentId ) {
+    console.log('test');
+    req.models.process.findOne({id:id}).exec(function(err, process){
+        var process_type;
+        if(err){
+            process = [];
+        }else{
+            processOne = process;
+            process_type = process.process_type;
+            //扫描内置流程
+            if(process_type == 0){
+                StatusController.getStatus(req,res,'one',studentId,getStudent);
             }else{
-                
-                console.dir('test:'+body);
-                
-            }
-        });
-    });
+                StatusController.getStatusListByPidSid(req,res,studentId,id).then(function(data){
+                    if(data!=null){
+                        var status = data[0].process_status;
+                        processOne.status = status
+                        console.log(processOne);
+                        console.log(status);
+                    }
+                    
+                    res.render('mobileDetail', { 
+                        title: '流程确认', 
+                        post: processOne,
+                        student: studentId,
+                        type: 'confirm'             
+                    });
 
-    req.on('error',function(e){
-        console.log('Error: ' + e.message);
-    });
-}
+                });
+            }
+        }    
+    });   
+};
+function changeStatus(req,res,encryptCode,type){
+    var id = cryptoComm.decryptUrl(encryptCode);
+    if(!type){
+        getProcessDetailByCode(req,res,id,studentId);
+    }else{
+        ProcessController.processFail(req,res);
+    }
+
+};
 
 
 /**
@@ -137,13 +150,14 @@ function getAccessToken(req,res,code,encryptCode,type,from,callback){
 module.exports = {
     handleCode: function(req,res){
         var code = req.query.code;
-        var encryptCode = req.query.codeUrl;
+        var encryptCode = req.query.codeurl;
+        var callback;
         //当access token不存在时，去数据库中读取
         if(access_token.length<=0){
-            getAccessToken(req,res,code,encryptCode,0);
+            getAccessToken(req,res,code,encryptCode,0,'one',callback);
         }else{
             //如果有 则直接读取学号
-            getStudentId(req,res,code,encryptCode,'one');
+            getStudentId(req,res,code,encryptCode,'one',callback);
         }
     },
     getStudentProcessStatus: function(req,res,callback){

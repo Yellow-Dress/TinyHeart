@@ -132,6 +132,8 @@ router.post('/deleteProcess',ProcessController.deleteProcess);
  */
 router.get('/handleCode',StudentController.handleCode);
 
+router.get('/processConfirm',ProcessController.processConfirm);
+
 /**
  * [生成二维码]
  * @param  {[type]} req    []

@@ -1,7 +1,7 @@
 var https = require("https");
 
-var corpid = "wx1d3765eb45497a18";
-var corpsecret = "QEr6U8_nqdz9zlo4SsXtmy8JNWuYVlIDT76VisdwTCkAjgw280jdcPEKN98fgkd4";
+var corpid = "*";
+var corpsecret = "*";
 var access_token = '';
 /**
  * [getAccessToken 获取access_token]

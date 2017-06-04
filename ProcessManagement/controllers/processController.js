@@ -1,17 +1,10 @@
 var cryptoComm = require('../common/algorithm');
 var StudentController = require('./studentController');
+var StatusController = require('./statusController');
 
 var processList;
-function getStatusListById(req,res,studentid){
-    return req.models.status.find({studentid:studentid}).then(function(status){
-        if(status.length>0){
-            return status;
-        }else
-            return null;
-    }).catch(function (err) {
-        console.log('err');
-    }); 
-};
+var processOne;
+
 function storeCodeUrl(req,res,id,url){
 	req.models.process.update({id:id},{code_url:url}).exec(function(err,result){
         var judge = 1;
@@ -22,7 +15,7 @@ function storeCodeUrl(req,res,id,url){
     });
 };
 
-function getStudent(res,req,data){
+function getStudent(res,req,data,type){
     console.log(data);
     var studentid = data.studentid;
     //资格审核状态23
@@ -33,36 +26,52 @@ function getStudent(res,req,data){
     var jwbcomplete = data.jwbcomplete;
 
     var statusList;
-
-    getStatusListById(req,res,studentid).then(function(data){
-        statusList = data;
-        console.log('test');
-        console.log(data);
-        //接口状态显示
-	    for(var process of processList){
-	    	if(process.id==23){
-	    		process.status = enrollcomplete;
-	    	}else if(process.id==24){
-	    		process.status = financecomplete;
-	    	}else if(process.id==25){
-	    		process.status = financecomplete;
-	    	}else if(statusList){ 
-	    		for(var status of statusList){
-	    			if(process.id == status.pid){
-	    				process.status = status.process_status;
-	    			}
-	    		}
-	    		
-        	}
-	    }
-        res.render('mobileHome', { 
-	        title: '流程列表', 
-	        student: studentid,
-	        posts: processList
+    if(type=='list'){
+	    StatusController.getStatusListById(req,res,studentid).then(function(data){
+	        statusList = data;
+	        console.log('test');
+	        console.log(data);
+	        //接口状态显示
+		    for(var process of processList){
+		    	if(process.id==23){
+		    		process.status = enrollcomplete;
+		    	}else if(process.id==24){
+		    		process.status = financecomplete;
+		    	}else if(process.id==25){
+		    		process.status = financecomplete;
+		    	}else if(statusList){ 
+		    		for(var status of statusList){
+		    			if(process.id == status.pid){
+		    				process.status = status.process_status;
+		    			}
+		    		}
+		    		
+	        	}
+		    }
+	        res.render('mobileHome', { 
+		        title: '流程列表', 
+		        student: studentid,
+		        posts: processList
+		    });
+	        
 	    });
-        
-    });
+	}
       
+};
+function processSuccess(req,res,studentId){
+    res.render('processSuccess', { 
+        title: '流程确认成功', 
+        user: studentId,
+        success: req.flash('success').toString(),
+        error: req.flash('error').toString()
+    }); 
+};
+function processFail(req,res){
+	res.render('processFail', { 
+        title: '流程确认失败', 
+        success: req.flash('success').toString(),
+        error: req.flash('error').toString()
+    }); 
 };
 
 module.exports = {
@@ -102,7 +111,8 @@ module.exports = {
 	        if(from == 'mobile'){
 	        	res.render('mobileDetail', { 
 		            title: '流程详情', 
-		            post: process		        
+		            post: process,
+		            type: 'detail'		        
 		        }); 
 	        }else{
 		        if(from == 'detail'){
@@ -194,5 +204,42 @@ module.exports = {
             }
             return res.json({type: judge});
 		});
-	}
+	},
+    processConfirm: function(req,res){
+    	var studentid = req.query.id;
+    	var code = req.query.code;
+    	var pid = cryptoComm.decryptUrl(code);
+    	console.log(studentid+' '+pid);
+    	StatusController.getStatusListByPidSid(req,res,studentid,pid).then(function(data){
+            console.log(data);
+            if(data!=null){
+                req.models.status.update({studentid:studentid,pid:pid},{process_status:1}).exec(function(err,result){
+		            if (err) {
+		                console.log('error'+err);
+		                req.flash('error', err);
+		                processFail(req,res);
+		            }else {
+		            	processSuccess(req,res,studentid); 
+					}
+		        });
+            }else{
+            	var Status = {
+		    		studentid : studentid,
+		    		pid : pid,
+		    		process_status : 1
+		    	};
+		    	console.log('Status');
+		    	console.log(Status);
+			    req.models.status.create(Status).exec(function(err,result){
+		            if (err) {
+		                req.flash('error', err);
+		                processFail(req,res);
+		            }else {
+		            	processSuccess(req,res,studentid); 
+		            }
+		            
+		        });
+            }
+        });
+    }
 }
