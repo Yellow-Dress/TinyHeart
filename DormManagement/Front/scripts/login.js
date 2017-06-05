@@ -20,7 +20,7 @@ Zepto(function($){
 
         $.ajax({
             type: 'POST',
-            url: 'http://localhost/dmg/login',
+            url: '/dmg/login',
             data: { 
                 username: username,
                 password: password
