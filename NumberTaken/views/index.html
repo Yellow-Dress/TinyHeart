@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <title>取号</title>
+    <link rel="stylesheet" href="stylesheets/weui.css"/>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <link href="stylesheets/ie10-viewport-bug-workaround.css" rel="stylesheet">
+    <!-- Custom styles for this template -->
+    <link href="stylesheets/signin.css" rel="stylesheet">
+    <link href="stylesheets/example.css" rel="stylesheet">
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <script src="javascripts/ie-emulation-modes-warning.js"></script>
+</head>
+
+<body ontouchstart>
+<div class="container" id="container">
+<div class="page">
+    <div class="page__hd">
+        <h1 class="page__title">
+            取号
+        </h1>
+        <p class="page__desc">请在大兴校区范围内取号</p>
+    </div>
+    <div class="page__bd page__bd_spacing">
+    <div>
+        <div class=class="weui-btn-area">
+             <a href="javascript:;" class="weui-btn weui-btn_primary" onclick="signIn()">取号</a>
+        </div>
+        <br/>
+        <div id="tips" class="weui-btn_default" display="none"></div>
+        <br/><br/>
+        <div>
+            纬度：<span id="latitude" class="weui-btn weui-btn_mini weui-btn_primary"></span>
+            &nbsp;&nbsp;&nbsp;&nbsp;
+            经度：<span id="longitude" class="weui-btn weui-btn_mini weui-btn_warn"></span>
+        </div>
+    </div>
+  </div>
+</div>
+    <!-- /container -->
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="javascripts/ie10-viewport-bug-workaround.js"></script>
+    <script src="javascripts/jquery-1.8.3.min.js"></script>
+    <script src="javascripts/signin.js"></script>
+   <script type="text/javascript" src="http://res.wx.qq.com/open/js/jweixin-1.0.0.js"></script>
+   <script type="text/javascript">
+        //$('#latitude').html('latitude');
+        var signature = '<%=signature%>';
+        var timestamp = <%=timestamp%>;
+        var nonceStr = '<%=nonceStr%>';
+        wx.config({
+            debug: true, // 开启调试模式,调用的所有api的返回值会在客户端alert出来，若要查看传入的参数，可以在pc端打开，参数信息会通过log打出，仅在pc端时才会打印。
+            appId: 'wx1d3765eb45497a18', // 必填，公众号的唯一标识
+            timestamp: timestamp, // 必填，生成签名的时间戳
+            nonceStr: nonceStr, // 必填，生成签名的随机串
+            signature: signature,// 必填，签名，见附录1
+            jsApiList: ['getLocation'] // 必填，需要使用的JS接口列表，所有JS接口列表见附录2
+        });
+
+
+        wx.ready(function(){
+          wx.getLocation({
+            type: 'wgs84', // 默认为wgs84的gps坐标，如果要返回直接给openLocation用的火星坐标，可传入'gcj02'
+            success: function (res) {
+                var latitude = res.latitude; // 纬度，浮点数，范围为90 ~ -90
+                var longitude = res.longitude; // 经度，浮点数，范围为180 ~ -180。
+                var speed = res.speed; // 速度，以米/每秒计
+                var accuracy = res.accuracy; // 位置精度
+                console.log(latitude);
+                $('#latitude').html(latitude);
+                $('#longitude').html(longitude);
+            }
+          });
+            // config信息验证后会执行ready方法，所有接口调用都必须在config接口获得结果之后，config是一个客户端的异步操作，所以如果需要在页面加载时就调用相关接口，则须把相关接口放在ready函数中调用来确保正确执行。对于用户触发时才调用的接口，则可以直接调用，不需要放在ready函数中。
+        });
+
+        wx.error(function (res) {  
+          alert("调用微信jsapi返回的状态:"+res.errMsg);  
+        });  
+   </script>
+</body>
+
+</html>
