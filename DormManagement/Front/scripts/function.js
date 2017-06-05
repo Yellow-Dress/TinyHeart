@@ -21,7 +21,6 @@ Zepto(function($){
     });
 
     $('.js-bed').on('click', function() {
-        // TODO: 校验宿舍号信息是否为空，否则要先导入\
         $.ajax({
             type: 'POST',
             url: 'http://localhost:4000/checkDormInfo',
