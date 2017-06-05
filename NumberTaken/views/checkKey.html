@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <title>验证密钥</title>
+    
+    <link href="/stylesheets/weui.min.css" rel="stylesheet">
+    <link href="/stylesheets/example.css" rel="stylesheet">
+    <!-- <link href="../public/stylesheets/weui.min.css" rel="stylesheet">
+    <link href="../public/stylesheets/example.css" rel="stylesheet"> -->
+</head>
+<body ontouchstart>
+    <div class="container" id="container">
+        <div class="page icons">
+            <div class="page__hd">
+                <h1 class="page__title">验证密钥</h1>
+                <p class="page__desc">请输入密钥</p>
+            </div>
+            <div class="page__bd page__bd_spacing">
+
+                 <div class="weui-cells weui-cells_form">
+                      <div class="weui-cell">
+                         <div class="weui-cell__hd"><label class="weui-label">密钥</label></div>
+                         <div class="weui-cell__bd">
+                             <input id="key" class="weui-input" type="text" placeholder="请输入密钥"/>
+                         </div>
+                      </div>
+
+                      <div class=class="weui-btn-area">
+                          <a href="javascript:;" class="weui-btn weui-btn_primary" onclick="checkKey()">确定</a>
+                      </div>
+                      <br/>
+                      <div id="tips" class="weui-btn_mini weui-btn_default" display="none"></div>
+                      <br/><br/>
+                </div>
+            </div>
+        </div>
+    </div> 
+    <script src="javascripts/jquery-1.8.3.min.js"></script>
+    <script src="javascripts/signin.js"></script>  
+</body>
+</html>

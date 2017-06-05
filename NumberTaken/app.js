@@ -55,5 +55,6 @@ app.use(function(err, req, res, next) {
 });
 
 app.use('/signin',index);
+app.use('/checkKey',index);
 
 module.exports = app;

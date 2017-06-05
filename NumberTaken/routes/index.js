@@ -55,13 +55,12 @@ router.post('/signin',function(req,res){
         message = -3;
       }
       
-      // if (longitude<116.3491||longitude>116.3526||latitude<39.75685||latitude>39.75772) {
-      //   //定位不在学校
-      //   console.log('wrong location!');
-      //   message = -2;
+      if (longitude<116.3||longitude>116.4||latitude<39.74||latitude>39.8) {
+        //定位不在学校
+        console.log('wrong location!');
+        message = -2;
         
-      // }else 
-      if (!user) {
+      }else if (!user) {
         //如果不存在则新增用户
         newUser.save(function (err, user) {
           if (err) {
@@ -184,6 +183,41 @@ router.get('/numberCheck',function(req,res){
         }
     });
   
+});
+
+router.get('/checkKey',function(req,res){
+  res.render('checkKey');
+});
+
+router.post('/checkKey',function(req,res){
+  var message = 0;
+
+  var key = req.body.key;
+
+  console.log('key:'+key);
+
+  if(key == "sspku"){
+    message = -1;
+    console.log('密钥匹配成功');
+  }else{
+    message = -2;
+  }
+
+  res.json({message: message});
+});
+
+router.get('/callNumber',function(req,res){
+  res.render('callNumber');
+});
+
+router.post('/callNumber',function(req,res){
+    var message = 0;
+    var number = req.body.number;
+
+    Numbers.updateData(number,function (err) {
+        console.log(number);
+    });
+    res.json({message: message});
 });
 
 module.exports = router;
