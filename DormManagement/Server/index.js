@@ -48,7 +48,7 @@ var sqlPool = mysql.createPool({
     connectionLimit: 20,
     host: 'localhost',
     user: 'root',
-    password: '',
+    password: 'caloline',
     database: 'dms'
 });
 
