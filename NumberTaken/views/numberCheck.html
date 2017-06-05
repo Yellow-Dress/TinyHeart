@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
-    <title>取号详情</title>
+    <title>叫号信息</title>
     
     <link href="/stylesheets/weui.min.css" rel="stylesheet">
     <link href="/stylesheets/example.css" rel="stylesheet">
@@ -14,19 +14,16 @@
     <div class="container" id="container">
         <div class="page icons">
             <div class="page__hd">
-                <h1 class="page__title">取号详情</h1>
-                <p class="page__desc">过号可直接进入</p>
+                <h1 class="page__title">叫号信息</h1>
+                <p class="page__desc">显示当前叫号的最大号码</p>
             </div>
             <div class="page__bd">
                 <article class="weui-article">
-                    <h1>您好，<%= user.name %>同学,</h1>
+                    <h1>您好，</h1>
                     <section>
                         <section>
                             <p>
-                                您所取的号码为：<%- user.number %>
-                            </p>
-                            <p>
-                                请携带好身份证，方便查验身份！
+                                目前叫号的最大号码为：<%- number.numberCur %>
                             </p>
                         </section>
                     </section>

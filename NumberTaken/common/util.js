@@ -1,11 +1,9 @@
-var Token = require('../models/tokens.js');
 var Ticket = require('../models/tickets.js');
 var https = require("https");
 
 var nonceStr = 'Skiagjvoiawejpogadm';
 var sign = require('./sign.js');
 var token = require('./token.js');
-
 
 var request = require('request');
 
@@ -45,4 +43,16 @@ function checkSignature(apiTicket,req){
  	return data;
 }
 
+// function getaccessToken(res,req){
+//   Tokens.get('wechat', function (err, tokens) {
+//         if (!tokens) {
+//           console.log('null');
+//         }
+//         console.log(tokens);
+//         res.write(data);
+//         res.end();
+//     });
+// }
+
 exports.getapiTicket = getapiTicket;
+//exports.getaccessToken = getaccessToken;

@@ -10,7 +10,7 @@ router.get('/', function(req,res, next){
     //console.log("oauth - login")
 
     // 第一步：用户同意授权，获取code
-    var router = '/';
+    var router = '/code';
     // 这是编码后的地址
     var return_uri = 'http://xixi.lilingkun.com:3000/'+router;  
     var scope = 'snsapi_base';
