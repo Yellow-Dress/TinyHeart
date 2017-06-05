@@ -68,7 +68,8 @@ function processSuccess(req,res,studentId){
 };
 function processFail(req,res){
 	res.render('processFail', { 
-        title: '流程确认失败', 
+        title: '流程确认失败',
+        from: 'process', 
         success: req.flash('success').toString(),
         error: req.flash('error').toString()
     }); 

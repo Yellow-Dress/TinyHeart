@@ -13,14 +13,19 @@
         <div class="page icons">
             <div class="page__hd">
                 <h1 class="page__title">你好</h1>
-                <p class="page__desc">流程确认</p>
+                <p class="page__desc">
+                    <% if (from=='process') { %>  流程确认<% } %>
+                    <% if (from=='page') { %> 页面无效 <% } %></p>
             </div>
             <div class="page__bd page__bd_spacing">
                 <div class="icon-box">
                     <i class="weui-icon-warn weui-icon_msg"></i>
                     <div class="icon-box__ctn">
                         <h3 class="icon-box__title">失败</h3>
-                        <p class="icon-box__desc">用于表示操作后将引起严重的不可挽回的后果的情况</p>
+                        <p class="icon-box__desc">
+                            <% if (from=='process') { %>  流程确认失败，请重新扫码确认<% } %>
+                            <% if (from=='page') { %> 页面无效，请重新访问页面或扫码，勿刷新页面 <% } %>
+                        </p>
                     </div>
                 </div>
 

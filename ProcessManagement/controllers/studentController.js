@@ -40,11 +40,8 @@ function getStudentId(request,response,code,encryptCode,type,callback){
                 console.log(studentId);
             }else{
                 //当学号读取失败，重新读取数据库中的access token
-                if(type=='one'){
-                    getAccessToken(request,response,code,encryptCode,1,callback);
-                }else if(type=='list'){
-
-                }
+                getAccessToken(request,response,code,encryptCode,1,type,callback);
+                
 
                 console.dir(body);
 
@@ -89,7 +86,7 @@ function getProcessDetailByCode(req, res, id, studentId ) {
         var process_type;
         if(err){
             process = [];
-        }else{
+        }else if(process){
             processOne = process;
             process_type = process.process_type;
             //扫描内置流程
@@ -117,16 +114,24 @@ function getProcessDetailByCode(req, res, id, studentId ) {
     });   
 };
 function changeStatus(req,res,encryptCode,type){
-    var id = cryptoComm.decryptUrl(encryptCode);
+    
     if(!type){
+        var id = cryptoComm.decryptUrl(encryptCode);
         getProcessDetailByCode(req,res,id,studentId);
     }else{
-        ProcessController.processFail(req,res);
+        pageFail(req,res);
     }
 
 };
 
-
+function pageFail(req,res){
+    res.render('processFail', { 
+        title: '访问失败', 
+        from: 'page',
+        success: req.flash('success').toString(),
+        error: req.flash('error').toString()
+    }); 
+};
 /**
  * [getAccessToken 从数据库中读取access token]
  * @param  {[type]} req         [description]
