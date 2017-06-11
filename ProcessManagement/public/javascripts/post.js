@@ -1,8 +1,8 @@
-var ue = UE.getEditor('editor');
 $("#sendBtn").click(function(){
     var type = 1;
     var title = $("#title").val();
-    var content = UE.getEditor('editor').getContent();
+    //var content = UE.getEditor('editor').getContent();
+    var content = $("#content").val();
     //输入校验
     var judge = 1;
     if(title.length<=0||content.length<=0){
