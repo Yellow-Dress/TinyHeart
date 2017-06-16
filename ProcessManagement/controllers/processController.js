@@ -138,7 +138,7 @@ module.exports = {
 	    		title : req.body.title,
 	    		content : req.body.content,
 	    		process_type : req.body.type,
-	    		sequence : 0
+	    		sequence : 99999999
 	    	};
 	    var url = '';
     	req.models.process.create(Process).exec(function(err,result){
@@ -166,19 +166,22 @@ module.exports = {
 	updateProcessSeq: function(req,res){
 		var judge = 1;
 		var seqList = req.body.list;
-		
 		for(var i=0;i<seqList.length;i++){
 			var seq = seqList[i];
-			req.models.process.update({id: seq} , {sequence: i+1}).exec(function(err,result){
+			req.models.process.update({id: seq} , {sequence: i+1}).then(function(err,result){
 	            if (err) {
 	                req.flash('error', err);
-	                console.log('error'+err);
+	                //console.log(err);
 	                judge = 0;
 	            }
 	        });
+	        if(i==(seqList.length-1)){
+            	req.flash('success', '顺序调整成功!');
+    			return res.json({type: judge});
+    			break;
+            }
 		}
-		req.flash('success', '顺序调整成功!');
-	    res.json({type: judge});
+		
 	},
 	updateProcess: function(req,res){
 		var judge = 1;
