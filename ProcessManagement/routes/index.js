@@ -4,7 +4,11 @@ var crypto = require('crypto');
 var UserController = require('../controllers/userController');
 var ProcessController = require('../controllers/processController');
 var StudentController = require('../controllers/studentController');
+var StatusController = require('../controllers/statusController');
 var qr_image = require('qr-image');  
+var jsSHA = require('jssha');
+var WXBizMsgCrypt = require('wechat-crypto');
+
 
 /**
  * 登录
@@ -161,6 +165,38 @@ router.get('/logout',function(req,res){
     req.flash('success','注销成功！');
     res.redirect('/');
    
+});
+
+router.get('/statistics',checkLogin);
+router.get('/statistics',function(req,res){
+    ProcessController.getProcessList(req,res,'statistics');
+});
+
+router.get('/getStudentList',checkLogin);
+router.get('/getStudentList',function(req,res){
+    StudentController.getStudentList(req,res);
+});
+
+router.get('/manualConfirm',checkLogin);
+router.get('/manualConfirm',function(req,res){
+    ProcessController.getProcessList(req,res,'manualConfirm');
+});
+
+router.post('/manualConfirm',checkLogin);
+router.post('/manualConfirm',ProcessController.manualConfirm);
+
+router.get('/weixin',function(req,res){
+    console.log('weixin');
+    var token = 'weixin';
+    var encodingAESKey = 'PpJOVVBozHAM2ELV69wtv381s7iytMjqkfwDiiLaHjT';
+    var corpId = 'wx1d3765eb45497a18';
+    var msg_signature = req.query.msg_signature;
+    var timestamp = req.query.timestamp;
+    var nonce = req.query.nonce;
+    var echostr = req.query.echostr;
+    var cryptor = new WXBizMsgCrypt(token, encodingAESKey, corpId)
+    var s = cryptor.decrypt(echostr);
+    res.send(s.message);
 });
 
 /**

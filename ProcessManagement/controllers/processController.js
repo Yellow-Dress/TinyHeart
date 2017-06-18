@@ -91,6 +91,30 @@ module.exports = {
 		            error: req.flash('error').toString()
 		        });             
 	        });   
+	    }else if(from=='statistics'){
+	    	req.models.process.find({user_name:req.session.user.user_name,process_type:1})
+            .sort('sequence')
+            .exec(function(err, process){
+                res.render('statistics', { 
+                    title: '统计', 
+                    user: req.session.user,
+                    processes: process,
+                    success: req.flash('success').toString(),
+                    error: req.flash('error').toString()
+                });            
+            });
+	    }else if(from=='manualConfirm'){
+	    	req.models.process.find({user_name:req.session.user.user_name,process_type:1})
+            .sort('sequence')
+            .exec(function(err, process){
+                res.render('manualConfirm', { 
+                    title: '人工确认', 
+                    user: req.session.user,
+                    processes: process,
+                    success: req.flash('success').toString(),
+                    error: req.flash('error').toString()
+                });            
+            });
 	    }else{
 	    	req.models.process.find()
 		    .sort('sequence')
@@ -245,5 +269,47 @@ module.exports = {
 		        });
             }
         });
+    },
+    manualConfirm: function(req,res){
+    	console.log(req.body);
+    	var studentId = req.body.studentId;
+    	var pid = req.body.process;
+    	var judge = 1;
+    	StudentController.getStudentById(req,res,studentId).then(function(student){
+    		console.log(student);
+    		if(student!=null){
+    			StatusController.getStatusListByPidSid(req,res,studentId,pid).then(function(data){
+		            console.log(data);
+		            if(data==null){
+		                var Status = {
+				    		studentid : studentId,
+				    		pid : pid,
+				    		process_status : 1
+				    	};
+				    	console.log('Status');
+				    	console.log(Status);
+					    req.models.status.create(Status).exec(function(err,result){
+				            if (err) {
+				            	judge = 0;
+				            }
+				            if(judge) req.flash('success', '确认成功!');
+		    				else req.flash('error', '确认失败!');
+		    				return res.json({type: judge});
+				        });
+		            }else{
+		            	req.flash('error', '学生：'+studentId+' 已确认该流程!');
+		    			return res.json({type: judge});
+		            }
+		        });
+		    			    	
+
+    		}else{
+    			judge = 0;
+    			req.flash('error', '学号不存在!');
+    			return res.json({type: judge});
+    		}
+    		
+    	});
+    	
     }
 }

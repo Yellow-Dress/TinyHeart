@@ -175,5 +175,38 @@ module.exports = {
             //如果有 则直接读取学号
             getStudentId(req,res,code,encryptCode,'list',callback);
         }
+    },
+    getStudentList: function(req,res){
+        console.log(req.query.processId);
+        console.log(req.query.processStatus);
+        console.log(req.query);
+        var status = req.query.processStatus;
+        var pid = req.query.processId;
+        var query = '';
+        if(status == 1){
+            query = 'select stu.sid,stu.sname,p.title,s.process_status '+
+                    'from student stu inner join status s on stu.sid = s.studentid '+
+                    'inner join process p on s.pid = p.id '+ 
+                    'where p.id ='+pid;
+        }else if(status == 0){
+            query = 'select sid,sname,process.title from student,process '+
+                    'where process.id='+pid+' and student.sid not in '+
+                    '(select studentid from status where pid='+pid+')'
+        }
+        console.log(query);
+        req.models.student.query(query,function(err,data){
+             console.log(data);
+             res.json({data: data})
+        });
+    },
+    getStudentById: function(req,res,studentId){
+        return req.models.student.findOne({sid:studentId}).then(function(student){
+            if(student){
+                return student;
+            }else
+                return null;
+        }).catch(function (err) {
+            console.log('err');
+        });
     }
 }

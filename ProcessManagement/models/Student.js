@@ -6,44 +6,53 @@ module.exports = Waterline.Collection.extend({
     connection: 'mysql',
 
     attributes: {
-        studentid: {
+        id: {
+            type: 'integer'
+        },
+        sid: {
             type: 'string',
             primaryKey:true,
         },
-        name: {
+        sname: {
             type: 'string'
         },
-        gender: {
+        sex: {
             type: 'string'
         },
-        location: {
+        enroll_type: {
+            type: 'string'
+        },
+        student_type: {
+            type: 'string'
+        },
+        degree_type: {
+            type: 'string'
+        },
+        subject: {
+            type: 'string'
+        },
+        subject_name: {
+            type: 'string'
+        },
+        direction_name: {
+            type: 'string'
+        },
+        attend_type: {
+            type: 'string'
+        },
+        is_abroad: {
+            type: 'string'
+        },
+        abroad_student: {
+            type: 'string'
+        },
+        campus: {
+            type: 'string'
+        },
+        school_year: {
             type: 'string'
         },
         grade: {
-            type: 'string'
-        },
-        gender: {
-            type: 'string'
-        },
-        enrollcomplete: {
-            type: 'string'
-        },
-        enrolldate: {
-            type: 'string'
-        },
-        financecomplete: {
-            type: 'string'
-        },
-        financedate: {
-            type: 'string'
-        },
-        jwbcomplete: {
-            type: 'string'
-        },
-        jwbdate: {
-            type: 'string'
-        },
-        isdorm: {
             type: 'string'
         }
     }
