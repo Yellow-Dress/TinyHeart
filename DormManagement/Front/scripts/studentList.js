@@ -5,7 +5,8 @@ Zepto(function($){
     var studentInfo_vm = new Vue({
         el: '#studentInfo',
         data: {
-            studentInfos: {}
+            studentInfos: {},
+            alreadyCount: 0
         },
         methods: {
 
@@ -46,6 +47,7 @@ Zepto(function($){
                             } else {
                                 studentInfo_vm._data.studentInfos = data.studentInfos.concat();                           
                                 studentInfosBackup = data.studentInfos.concat();                                                          
+                                studentInfo_vm._data.alreadyCount = data.alreadyCount;
                             }
                         }
                     },
@@ -182,7 +184,9 @@ Zepto(function($){
         }
     })
 
+    $('.js-output').on('click', function() {
 
+    });
     
     $('.js-add').on('click', function(e) {
         $('.modal').show();
@@ -211,11 +215,11 @@ Zepto(function($){
             return;
         }
 
-        var re = /^\d{10}$/;
-        if (!re.test(studentNo)) {
-            alert('学号输入有误。')
-            return;
-        }
+        // var re = /^\d{10}$/;
+        // if (!re.test(studentNo)) {
+        //     alert('学号输入有误。')
+        //     return;
+        // }
 
         $.ajax({
             type: 'POST',

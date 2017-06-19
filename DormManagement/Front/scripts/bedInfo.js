@@ -5,7 +5,9 @@ Zepto(function($){
     var bedInfo_vm = new Vue({
         el: '#bedInfo',
         data: {
-            bedInfos: {}
+            bedInfos: {},
+            loading: false,
+            loadingContent: ''
         },
         methods: {
 
@@ -386,24 +388,25 @@ Zepto(function($){
             return;
         }
 
-        var re = /^\d{10}$/;
-        if (!re.test(studentNo)) {
-            alert('学号输入有误。')
-            return;
-        }   
-
+        // var re = /^\d{10}$/;
+        // if (!re.test(studentNo)) {
+        //     alert('学号输入有误。')
+        //     return;
+        // }   
+        
         var checkboxs = $('.js-selectOne').filter(function() {
             return this.checked == true;
         })
 
         var bedInfoBlock = $(checkboxs[0]).parents('tr');
 
-        var index = bedInfoBlock.data('index'),
-            bedInfoObj = bedInfo_vm._data.bedInfos[index];
+        var index = bedInfoBlock.data('index');
+        var tempStr = JSON.stringify(bedInfo_vm._data.bedInfos[index]);
+            bedInfoObj = JSON.parse(tempStr);
 
         bedInfoObj.studentName = studentName;
-        bedInfoObj.studentNo = studentNo;      
-
+        bedInfoObj.studentNo = studentNo;
+        
         $.ajax({
             type: 'POST',
             url: 'http://localhost:4000/distribute',
@@ -418,8 +421,10 @@ Zepto(function($){
                             alert(data['errorMsg']);
                         } else {
                             alert('分配失败！');
-                        }              
+                        }  
+                        return;            
                     } else {
+                        bedInfo_vm._data.bedInfos[index] = bedInfoObj;
                         var backupIndex = bedInfosBackup.indexOf(bedInfoObj);
 
                         bedInfoObj.status = 1;
@@ -484,12 +489,12 @@ Zepto(function($){
             return;
         }
 
-        var re = /^\d{10}$/;
+        // var re = /^\d{10}$/;
 
-        if (!re.test(studentNo)) {
-            alert('学号输入有误。')
-            return;
-        }   
+        // if (!re.test(studentNo)) {
+        //     alert('学号输入有误。')
+        //     return;
+        // }   
 
         var bedInfos = bedInfo_vm._data.bedInfos.filter(function(elem) {
             if (elem.studentNo == undefined) {

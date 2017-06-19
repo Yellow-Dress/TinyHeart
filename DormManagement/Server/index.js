@@ -15,6 +15,7 @@ var https = require('https');
 var logPath_bed = path.join(__dirname, 'dms_bed.log');
 var logPath_dorm = path.join(__dirname, 'dms_dorm.log');
 var logPath_student = path.join(__dirname, 'dms_student.log');
+var TOKEN = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 
 var app = express();
 
@@ -45,10 +46,10 @@ app.all('*', function(req, res, next) {
 });
 
 var sqlPool = mysql.createPool({
-    connectionLimit: 20,
+    connectionLimit: 100,
     host: 'localhost',
     user: 'root',
-    password: 'caloline',
+    password: '',
     database: 'dms'
 });
 
@@ -263,7 +264,9 @@ app.post('/getDormInfo', function(req, res) {
 
 
 app.post('/getStudentInfos', function(req, res) {
-	var studentInfoQuerySql = "SELECT * FROM student WHERE deleteBit=? ORDER BY studentNo",
+	// var studentInfoQuerySql = "SELECT * FROM student WHERE deleteBit=? ORDER BY studentNo",
+    
+	var studentInfoQuerySql = "SELECT s.id, s.studentNo, s.studentName, b.roomNo FROM student s LEFT JOIN bed b on (s.studentNo = b.studentNo) WHERE s.deleteBit=0 ORDER BY s.studentNo DESC",
 		studentInfoQuerySql_Params = [0];
 
     sqlPool.getConnection(function(err, connection) {
@@ -280,7 +283,15 @@ app.post('/getStudentInfos', function(req, res) {
                 res.send( {isConnect: true, isSuccess: false} );
             }
 
-            res.send( {isConnect: true, isSuccess: true, studentInfos: result} );
+            var alreadyCount = 0;
+
+            for (var i = 0; i < result.length; i++) {
+                if (result[i].roomNo != null) {
+                    alreadyCount++;
+                }
+            }
+
+            res.send( {isConnect: true, isSuccess: true, studentInfos: result, alreadyCount: alreadyCount} );
 
         });
     })    
@@ -496,8 +507,8 @@ app.post('/distribute', function(req, res) {
         studentName = req.body.studentName,
         studentNo = req.body.studentNo;
 
-    var bedInfoQuerySql = "SELECT * FROM bed WHERE buildingNo=? AND roomNo=? AND bedNo=?",
-        bedInfoQuerySql_Params = [buildingNo, roomNo, bedNo];
+    var bedInfoQuerySql = "SELECT * FROM bed WHERE buildingNo=? AND roomNo=? AND bedNo=? AND deleteBit=?",
+        bedInfoQuerySql_Params = [buildingNo, roomNo, bedNo, 0];
 
     sqlPool.getConnection(function(err, connection) {
         if (err) {
@@ -518,30 +529,90 @@ app.post('/distribute', function(req, res) {
                 if (bedInfoObj['status'] != 0) {
                     res.send( {isConnect: true, isSuccess: false, errorMsg: '只有空床状态才可以分配学生！'} );
                 }
+               
+                var responseText = "";
 
-                var bedInfoUpdateSql = "UPDATE bed SET status=?, studentNo=?, studentName=? WHERE buildingNo=? AND roomNo=? AND bedNo=?",
-                    bedInfoUpdateSql_Params = [1, studentNo, studentName, bedInfoObj['buildingNo'], bedInfoObj['roomNo'], bedInfoObj['bedNo']];
-
-                sqlPool.getConnection(function(err, connection) {
-                    
-
-                    if (err) {
-                        console.log(err);
-                        res.send( {isConnect: false, isSuccess: false} );
-                    }
-
-                    var sqlQuery = connection.query(bedInfoUpdateSql, bedInfoUpdateSql_Params, function(err, result) {
-                        connection.release();
-                        if (err) {
-                            console.log(err);
-                            res.send( {isConnect: true, isSuccess: false} );
-                        }
-                        
-                        res.send( {isConnect: true, isSuccess: true} );
-
+                https.get("https://api.mysspku.com/index.php/V2/Ssbd/getinfo?stuid=" + studentNo + "&token=" + TOKEN, (studentRes) => {
+                    studentRes.on('data', (d) => {
+                        responseText += d;
                     });
-                });
-              
+
+                    studentRes.on('end', () => {
+                        var responseObj = JSON.parse(responseText);
+
+                        if (responseObj.errcode == 0) {
+
+                            var gender = bedInfoObj['sex'] == 0 ? '女' : '男';
+
+                            if (gender != responseObj.data.gender) {
+                                res.send( {isConnect: true, isSuccess: false, errorMsg: '性别与床位不符！'} );
+                                return;
+                            }
+                            
+                            if (studentName != responseObj.data.name) {
+                                res.send( {isConnect: true, isSuccess: false, errorMsg: '学号与姓名不符！'} );
+                                return;
+                            }                           
+
+                            var bedInfoQuerySql = "SELECT * FROM bed WHERE studentNo=? AND deleteBit=?",
+                                bedInfoQuerySql_Params = [studentNo, 0];
+
+                            sqlPool.getConnection(function(err, connection) {
+                                if (err) {
+                                    console.log(err);
+                                    res.send( {isConnect: false, isSuccess: false} );
+                                }
+
+                                var sqlQuery = connection.query(bedInfoQuerySql, bedInfoQuerySql_Params, function(err, result) {
+                                    connection.release();
+                                    if (err) {
+                                        console.log(err);
+                                        res.send( {isConnect: true, isSuccess: false} );
+                                    }
+                                    
+                                    if (result.length > 0) {
+                                        res.send( {isConnect: true, isSuccess: false, errorMsg: '该同学已办理过住宿！'} );
+                                        return;
+                                    } else {
+                                        var bedInfoUpdateSql = "UPDATE bed SET status=?, studentNo=?, studentName=? WHERE buildingNo=? AND roomNo=? AND bedNo=?",
+                                            bedInfoUpdateSql_Params = [1, studentNo, studentName, bedInfoObj['buildingNo'], bedInfoObj['roomNo'], bedInfoObj['bedNo']];
+
+                                        sqlPool.getConnection(function(err, connection) {
+                                            if (err) {
+                                                console.log(err);
+                                                res.send( {isConnect: false, isSuccess: false} );
+                                            }
+
+                                            var sqlQuery = connection.query(bedInfoUpdateSql, bedInfoUpdateSql_Params, function(err, result) {
+                                                connection.release();
+                                                if (err) {
+                                                    console.log(err);
+                                                    res.send( {isConnect: true, isSuccess: false} );
+                                                }
+                                                
+                                                res.send( {isConnect: true, isSuccess: true} );
+
+                                            });
+                                        });
+                                    }
+
+                                });
+                            });
+
+                        } else {
+                            if (responseObj.errcode == 40001) {
+                                console.log('学生编号不存在。');
+                            } else if (responseObj.errcode == 40901) {
+                                console.log('无效的token。');
+                            }
+                            res.send({ isSuccess: false});
+                        }
+                    });                                        
+                }).on('error', (e) => {                    
+                    res.send({ isSuccess: false});
+                    console.error(e);
+                });     
+          
             } else {
                 res.send( {isConnect: true, isSuccess: false, errorMsg: '床位信息错误，请检查楼号、宿舍号、床号。'} );
             }
@@ -854,7 +925,6 @@ app.post('/fetchStudentInfo', function(req, res) {
 
 app.post('/fetchStudentDetail', function(req, res) {
     var stuid = req.body.stuid;
-    var TOKEN = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     var responseText = "";
 
     https.get("https://api.mysspku.com/index.php/V2/Ssbd/getinfo?stuid=" + stuid + "&token=" + TOKEN, (financeRes) => {
@@ -953,6 +1023,7 @@ function updateBedInfoByExcel(filePath) {
                 if (flag) {
                     // 插入数据库
                     console.log('通过校验');
+                    console.log(bedInfoArr);
                     async.eachSeries(bedInfoArr, function(bedInfoObj, callback) {
                         try {
                             var bedInfoQuerySql = "SELECT * FROM bed WHERE buildingNo=? AND roomNo=? AND bedNo=?",
@@ -965,12 +1036,13 @@ function updateBedInfoByExcel(filePath) {
                                 }
 
                                 var sqlQuery = connection.query(bedInfoQuerySql, bedInfoQuerySql_Params, function(err, result) {
+                                    connection.release();
+
                                     if (err) {
                                         console.log(err);
-                                        connection.release();
                                         callback(err);
                                     }
-                                
+
                                     if (result.length > 0) {
                                         // 该床位已有记录，则修改
                                         console.log(bedInfoObj);
@@ -985,9 +1057,10 @@ function updateBedInfoByExcel(filePath) {
                                             }
 
                                             var sqlQuery = connection.query(bedInfoUpdateSql, bedInfoUpdateSql_Params, function(err, result) {
+                                                connection.release();
+                                                
                                                 if (err) {
                                                     console.log(err);
-                                                    connection.release();
                                                     callback(err);
                                                 }
 
@@ -1008,9 +1081,10 @@ function updateBedInfoByExcel(filePath) {
                                             }
 
                                             var sqlQuery = connection.query(bedInfoInsertSql, bedInfoInsertSql_Params, function(err, result) {
+                                                connection.release();
+
                                                 if (err) {
                                                     console.log(err);
-                                                    connection.release();
                                                     callback(err);
                                                 }
 
@@ -1085,12 +1159,13 @@ function updateDormInfoByExcel(filePath) {
                                 }
 
                                 var sqlQuery = connection.query(dormInfoQuerySql, dormInfoQuerySql_Params, function(err, result) {
+                                    connection.release();
+                                    
                                     if (err) {
                                         console.log(err);
-                                        connection.release();
                                         callback(err);
                                     }
-                                
+
                                     if (result.length > 0) {
                                         dormInfoObj = result[0];
                                         if (dormInfoObj['deleteBit'] == 1) {
@@ -1107,6 +1182,7 @@ function updateDormInfoByExcel(filePath) {
 
                                                 var sqlQuery = connection.query(dormInfoDeleteSql, dormInfoDeleteSql_Params, function(err, result) {
                                                     connection.release();
+
                                                     if (err) {
                                                         console.log(err);
                                                         callback(err);
@@ -1132,9 +1208,10 @@ function updateDormInfoByExcel(filePath) {
                                             }
 
                                             var sqlQuery = connection.query(dormInfoInsertSql, dormInfoInsertSql_Params, function(err, result) {
+                                                connection.release();
+
                                                 if (err) {
                                                     console.log(err);
-                                                    connection.release();
                                                     callback(err);
                                                 }
 
@@ -1209,9 +1286,10 @@ function updateStudentInfoByExcel(filePath) {
                                 }
 
                                 var sqlQuery = connection.query(studentInfoQuerySql, studentInfoQuerySql_Params, function(err, result) {
+                                    connection.release();
+
                                     if (err) {
                                         console.log(err);
-                                        connection.release();
                                         callback(err);
                                     }
                                 
@@ -1231,6 +1309,7 @@ function updateStudentInfoByExcel(filePath) {
 
                                                 var sqlQuery = connection.query(studentInfoUpdateSql, studentInfoUpdateSql_Params, function(err, result) {
                                                     connection.release();
+
                                                     if (err) {
                                                         console.log(err);
                                                         callback(err);
@@ -1252,6 +1331,7 @@ function updateStudentInfoByExcel(filePath) {
 
                                                 var sqlQuery = connection.query(studentInfoUpdateSql, studentInfoUpdateSql_Params, function(err, result) {
                                                     connection.release();
+                                                   
                                                     if (err) {
                                                         console.log(err);
                                                         callback(err);
@@ -1274,9 +1354,10 @@ function updateStudentInfoByExcel(filePath) {
                                             }
 
                                             var sqlQuery = connection.query(studentInfoInsertSql, studentInfoInsertSql_Params, function(err, result) {
+                                                connection.release();
+
                                                 if (err) {
                                                     console.log(err);
-                                                    connection.release();
                                                     callback(err);
                                                 }
 
@@ -1326,15 +1407,17 @@ app.post('/validateStudent', function(req, res) {
                 console.log(responseObj)
                 // TODO：测试模拟用，记得删除
                 responseObj.errcode = undefined;
-                responseObj.UserId = "1601210386";
+                responseObj.UserId = "1601210652";
 
                 if (responseObj.errcode != undefined) {
                     res.send({ isSuccess: false });
+                    return;
                 } else {
                     var UserId = responseObj.UserId;
 
                     if (UserId == undefined) {
                         res.send({ isValidate: false});
+                        return;
                     } else {
                         // 验证是否在可选宿舍名单中
 
@@ -1349,6 +1432,7 @@ app.post('/validateStudent', function(req, res) {
 
                             var sqlQuery = connection.query(studentInfoQuerySql, studentInfoQuerySql_Params, function(err, result) {
                                 connection.release();
+                                
                                 if (err) {
                                     console.log(err);
                                     res.send( {isConnect: false} );
@@ -1356,9 +1440,7 @@ app.post('/validateStudent', function(req, res) {
                                 
                                 // 在名单之中
                                 if (result.length > 0) {
-                                    // res.send( {isSuccess: true} );
-
-                                    var TOKEN = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+ 
                                     var responseText = "";
 
                                     https.get("https://api.mysspku.com/index.php/V2/Ssbd/getinfo?stuid=" + UserId + "&token=" + TOKEN, (financeRes) => {
@@ -1392,6 +1474,7 @@ app.post('/validateStudent', function(req, res) {
                                     });;
                                 } else {
                                     res.send({ isValid: false });
+                                    return;
                                 }
                                 
 
@@ -1428,6 +1511,7 @@ app.post('/validatePartner', function(req, res) {
 
         var sqlQuery = connection.query(bedInfoQuerySql, bedInfoQuerySql_Params, function(err, result) {
             connection.release();
+
             if (err) {
                 console.log(err);
                 res.send( {errcode: 4001, msg: "数据库连接错误。"} );
@@ -1449,6 +1533,7 @@ app.post('/validatePartner', function(req, res) {
 
                     var sqlQuery = connection.query(studentQuerySql, studentQuerySql_Params, function(err, result) {
                         connection.release();
+
                         if (err) {
                             console.log(err);
                             res.send( {errcode: 4001, msg: "数据库连接错误。"} );
@@ -1459,7 +1544,6 @@ app.post('/validatePartner', function(req, res) {
                                 res.send(  {errcode: 4004, msg: "添加失败，同住人校验码错误"} );
                             } else {
                                  // 校验是否缴费及性别
-                                var TOKEN = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
                                 var responseText = "";
 
                                 https.get("https://api.mysspku.com/index.php/V2/Ssbd/getinfo?stuid=" + stuid + "&token=" + TOKEN, (financeRes) => {
@@ -1545,6 +1629,7 @@ app.post('/getAvailableDormStatus', function(req, res) {
 
         var sqlQuery = connection.query(totalBedQuerySql, totalBedQuerySql_Params, function(err, result) {
             connection.release();
+
             if (err) {
                 console.log(err);
                 res.send( {errcode: 4001, msg: "数据库连接错误。"} );
@@ -1664,7 +1749,7 @@ app.post('/confirmDistribute', function(req, res) {
                 
                 console.log(targetRoomNo);
 
-                var bedInfoQuerySql = "SELECT * FROM bed WHERE buildingNo=? AND roomNo=? AND usable=? AND status=? AND deleteBit=?",
+                var bedInfoQuerySql = "SELECT * FROM bed WHERE buildingNo=? AND roomNo=? AND usable=? AND status=? AND deleteBit=? ORDER BY buildingNo, roomNo, bedNo",
                     bedInfoQuerySql_Params = [buildingNo, targetRoomNo, 1, 0, 0];
 
                 sqlPool.getConnection(function(err, connection) {
@@ -1729,6 +1814,7 @@ app.post('/confirmDistribute', function(req, res) {
     });        
 });
 
+// 获取学生住宿状态
 app.post('/checkStudentStatus', function(req, res) {
     var stuid = req.body.stuid;
 
@@ -1775,25 +1861,25 @@ function validateBedInfo(bedInfoObj, recordCount) {
         } else {
             // 根据不同楼号检测宿舍号的有效性
             // 5号楼：4位数字；13号楼：F+4位数字；14号楼：E+4位数字
-            if (bedInfoObj['buildingNo'] != undefined) {
-                var re;
-                switch(bedInfoObj['buildingNo']) {
-                    case 5:
-                        re = /^\d{4}$/;
-                        break;
-                    case 13:
-                        re = /^F\d{4}$/;
-                        break;
-                    case 14:
-                        re = /^E\d{4}$/;              
-                        break;
-                }
+            // if (bedInfoObj['buildingNo'] != undefined) {
+            //     var re;
+            //     switch(bedInfoObj['buildingNo']) {
+            //         case 5:
+            //             re = /^\d{4}$/;
+            //             break;
+            //         case 13:
+            //             re = /^F\d{4}$/;
+            //             break;
+            //         case 14:
+            //             re = /^E\d{4}$/;              
+            //             break;
+            //     }
 
-                if (!re.test(bedInfoObj['roomNo'])) {
-                    log.write(logPath_bed, "第" + recordCount + "条记录宿舍号格式错误。");
-                    flag = false;                     
-                }
-            }
+            //     if (!re.test(bedInfoObj['roomNo'])) {
+            //         log.write(logPath_bed, "第" + recordCount + "条记录宿舍号格式错误。");
+            //         flag = false;                     
+            //     }
+            // }
         }
 
         if (bedInfoObj['bedNo'] == undefined) {
@@ -1816,11 +1902,12 @@ function validateBedInfo(bedInfoObj, recordCount) {
                 log.write(logPath_bed, "第" + recordCount + "条记录缺少学生学号。");
                 flag = false;
             } else {
-                var re = /^\d{10}$/;
-                if (!re.test(bedInfoObj['studentNo'])) {
-                    log.write(logPath_bed, "第" + recordCount + "条记录学生学号格式错误。");
-                    flag = false;
-                }
+                // 学号验证
+                // var re = /^\d{10}$/;
+                // if (!re.test(bedInfoObj['studentNo'])) {
+                //     log.write(logPath_bed, "第" + recordCount + "条记录学生学号格式错误。");
+                //     flag = false;
+                // }
             }
             if (bedInfoObj['studentName'] == undefined) {
                 log.write(logPath_bed, "第" + recordCount + "条记录缺少学生姓名。");
@@ -1845,9 +1932,10 @@ function validateBedInfo(bedInfoObj, recordCount) {
                 }
 
                 var sqlQuery = connection.query(dormInfoQuerySql, dormInfoQuerySql_Params, function(err, result) {
+                    connection.release();
+
                     if (err) {
                         console.log(err);
-                        connection.release();
                         callback(err);
                     }
                     
@@ -1885,25 +1973,25 @@ function validateDormInfo(dormInfoObj, recordCount) {
     } else {
         // 根据不同楼号检测宿舍号的有效性
         // 5号楼：4位数字；13号楼：F+4位数字；14号楼：E+4位数字
-        if (dormInfoObj['buildingNo'] != undefined) {
-            var re;
-            switch(dormInfoObj['buildingNo']) {
-                case 5:
-                    re = /^5\d{3}$/;
-                    break;
-                case 13:
-                    re = /^F\d{4}$/;
-                    break;
-                case 14:
-                    re = /^E\d{4}$/;              
-                    break;
-            }
+        // if (dormInfoObj['buildingNo'] != undefined) {
+        //     var re;
+        //     switch(dormInfoObj['buildingNo']) {
+        //         case 5:
+        //             re = /^5\d{3}$/;
+        //             break;
+        //         case 13:
+        //             re = /^F\d{4}$/;
+        //             break;
+        //         case 14:
+        //             re = /^E\d{4}$/;              
+        //             break;
+        //     }
 
-            if (!re.test(dormInfoObj['roomNo'])) {
-                log.write(logPath_dorm, "第" + recordCount + "条记录宿舍号格式错误。");
-                flag = false;                     
-            }
-        }
+        //     if (!re.test(dormInfoObj['roomNo'])) {
+        //         log.write(logPath_dorm, "第" + recordCount + "条记录宿舍号格式错误。");
+        //         flag = false;                     
+        //     }
+        // }
     }
 
     return flag;
@@ -1917,12 +2005,13 @@ function validateStudentInfo(studentInfoObj, recordCount) {
         log.write(logPath_student, "第" + recordCount + "条记录缺少学号。");
         flag = false;
     } else {
-        var re = /^\d{10}$/;
+        // 学号验证
+        // var re = /^\d{10}$/;
 
-        if (!re.test(studentInfoObj['studentNo'])) {
-            log.write(logPath_student, "第" + recordCount + "条记录学号输入有误。");
-            flag = false;            
-        }
+        // if (!re.test(studentInfoObj['studentNo'])) {
+        //     log.write(logPath_student, "第" + recordCount + "条记录学号输入有误。");
+        //     flag = false;            
+        // }
     }
 
     // 检测是否姓名为空

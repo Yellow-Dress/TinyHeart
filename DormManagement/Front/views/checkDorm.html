@@ -72,18 +72,6 @@
                                         <button class="weui-vcode-btn" v-on:click="removePartner(index)" style="padding: 0"><i class="weui-icon-cancel"></i></button>
                                     </div>
                                 </div>                               
-                                <!--<div class="weui-cell weui-cell_vcode">
-                                    <div class="weui-cell__hd">
-                                        <label class="weui-label">同住人学号</label>
-                                    </div>
-                                    <div class="weui-cell__bd">
-                                        <input class="weui-input" type="tel" placeholder="请输入学号">
-                                    </div>
-                                    <div class="weui-cell__ft">
-                                        <button class="weui-vcode-btn" style="padding: 0 8px;font-size: 16px;padding-right: 0px;">确认</button>
-                                        <button class="weui-vcode-btn" style="padding: 0"><i class="weui-icon-cancel"></i></button>
-                                    </div>
-                                </div>    -->
                                 <div class="weui-cell weui-cell_vcode" v-if="addBlockSwitch">
                                     <div class="weui-cell__hd">
                                         <label class="weui-label">同住人学号</label>
@@ -120,7 +108,7 @@
                 </div>
 
                 <div id="loadingToast" style="opacity: 0; display: none;">
-                    <div class="weui-mask_transparent"></div>
+                    <div class="weui-mask"></div>
                     <div class="weui-toast">
                         <i class="weui-loading weui-icon_toast"></i>
                         <p class="weui-toast__content" id="loadingMsg">处理中</p>

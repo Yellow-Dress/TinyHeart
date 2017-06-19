@@ -144,7 +144,7 @@ Zepto(function($){
 
         var deleteCheck = confirm('确认删除吗？');
         if (deleteCheck == true) {
-            // 校验是否能办理入住
+            
             var index = dormInfoBlock.data('index'),
                 dormInfoObj = dormInfo_vm._data.dormInfos[index];
             
@@ -224,23 +224,23 @@ Zepto(function($){
             return;           
         }
 
-        var re;
-        switch(buildingNo) {
-            case 5:
-                re = /^5\d{3}$/;
-                break;
-            case 13:
-                re = /^F\d{4}$/;
-                break;
-            case 14:
-                re = /^E\d{4}$/;              
-                break;           
-        }
+        // var re;
+        // switch(buildingNo) {
+        //     case 5:
+        //         re = /^5\d{3}$/;
+        //         break;
+        //     case 13:
+        //         re = /^F\d{4}$/;
+        //         break;
+        //     case 14:
+        //         re = /^E\d{4}$/;              
+        //         break;           
+        // }
 
-        if (!re.test(roomNo)) {
-            alert('宿舍号输入有误。');
-            return;
-        }
+        // if (!re.test(roomNo)) {
+        //     alert('宿舍号输入有误。');
+        //     return;
+        // }
 
         $.ajax({
             type: 'POST',

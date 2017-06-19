@@ -20,6 +20,9 @@ Zepto(function($){
     });
 
     if (stuid != undefined) {
+        $('#loadingMsg').html('加载中');
+        $('#loadingToast').css('opacity', 1);
+        $('#loadingToast').show();
 
         $.ajax({  
             type: 'POST',
@@ -54,7 +57,10 @@ Zepto(function($){
                                             personalPage_vm._data.buildingNo = data.dormStatus.buildingNo;
                                             personalPage_vm._data.roomNo = data.dormStatus.roomNo;
                                             personalPage_vm._data.bedNo = data.dormStatus.bedNo;
-                                            personalPage_vm._data.distributed = true;                           
+                                            personalPage_vm._data.distributed = true;    
+                                            
+                                            $('#loadingToast').css('opacity', 0);
+                                            $('#loadingToast').hide();                           
                                         } else {
                                             $.ajax({  
                                                 type: 'POST',
@@ -75,6 +81,9 @@ Zepto(function($){
                                                             }                                                                           
                                                         }
                                                     }
+
+                                                    $('#loadingToast').css('opacity', 0);
+                                                    $('#loadingToast').hide();       
                                                 },
                                                 error: function(xhr, type){
                                                     console.log(xhr);

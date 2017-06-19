@@ -21,7 +21,7 @@
 			<div class="main-block large">
 				<div class="studentInfo-hd">
 					<span class="teacher-name"><strong>新生选宿舍名单管理</strong></span>
-					<span class="student-count" >共 <i>{{ studentInfos.length }}</i> 个</span>
+					<span class="student-count" >共 <i>{{ studentInfos.length }}</i> 个，已有 {{ alreadyCount }} 个办理住宿</span>
 					<span style="margin-left: 60px">学号：</span>
 					<input class="search-input" type="text" id="studentNo-input" />
 					<span class="btn btn-blue js-studentNo-search">搜索</span>
@@ -31,6 +31,7 @@
 						<form id="uploadDormInfoForm" action="http://localhost:4000/uploadStudentInfo" name="studentInfo" method="post" enctype= "multipart/form-data" style="display: none;"> 
 							<input id="uploadDormInfo" type="file" name="upfile" />  
 						</form>  
+						<span class="btn btn-blue js-output">导出成Excel</span>
 						<span class="btn btn-orange js-add">新增</span>
 						<span class="btn btn-red js-delete">删除</span>
 					</div>
@@ -42,6 +43,7 @@
 								<th style="width: 10px;"><input disabled="disabled" type="checkbox" class="js-selectAll"/></th>
 								<th style="width: 5%">学号</th>
 								<th style="width: 7%;">姓名</th>
+								<th style="width: 7%;">宿舍号</th>
 							</tr>
 						</thead>
 						<tbody class="js-tbody">
@@ -49,6 +51,7 @@
 								<td><input type="checkbox" class="js-selectOne" /></td>
 								<td>{{ studentInfo.studentNo }}</td>
 								<td>{{ studentInfo.studentName }}</td>
+								<td>{{ studentInfo.roomNo }}</td>
 							</tr>
 						</tbody>
 					</table>

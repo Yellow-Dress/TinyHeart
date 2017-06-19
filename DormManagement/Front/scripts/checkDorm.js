@@ -126,6 +126,13 @@ Zepto(function($){
                 }
             },
             confirmDistribute: function() {
+                if (checkDorm_vm._data.multiFlag == true) {
+                    if (checkDorm_vm._data.validStudentList.length == 0) {
+                        alert('未添加同住人');
+                        return;
+                    }
+                }
+
                 var max = 0;
 
                 switch($('select').val()) {
@@ -231,31 +238,53 @@ Zepto(function($){
 
                     $.ajax({  
                         type: 'POST',
-                        url: 'http://localhost:4000/getAvailableDormStatus',
-                        data: { sex: checkDorm_vm._data.sex },
+                        url: 'http://localhost:4000/checkStudentStatus',
+                        data: { stuid: stuid },
                         dataType: 'json',
                         success: function(data){
 
-                            if (data.errcode != undefined) {
-                                alert(data.msg);
-                            } else {
-                                
-                                checkDorm_vm.max5 = data.status.max5;
-                                checkDorm_vm.max13 = data.status.max13;
-                                checkDorm_vm.max14 = data.status.max14;    
-                                checkDorm_vm.building5 = data.status.building5;
-                                checkDorm_vm.building13 = data.status.building13;
-                                checkDorm_vm.building14 = data.status.building14;        
-                                $('#loadingToast').css('opacity', 0);
-                                $('#loadingToast').hide();                                                                                                
+                            if (data.dormStatus != undefined) {
+                                alert('您已办理过住宿了');
+                                window.location.href = './personalPage.html';
+                                return;
                             }
+
+                            $.ajax({  
+                                type: 'POST',
+                                url: 'http://localhost:4000/getAvailableDormStatus',
+                                data: { sex: checkDorm_vm._data.sex },
+                                dataType: 'json',
+                                success: function(data){
+
+                                    if (data.errcode != undefined) {
+                                        alert(data.msg);
+                                    } else {
+                                        
+                                        checkDorm_vm.max5 = data.status.max5;
+                                        checkDorm_vm.max13 = data.status.max13;
+                                        checkDorm_vm.max14 = data.status.max14;    
+                                        checkDorm_vm.building5 = data.status.building5;
+                                        checkDorm_vm.building13 = data.status.building13;
+                                        checkDorm_vm.building14 = data.status.building14;        
+                                        $('#loadingToast').css('opacity', 0);
+                                        $('#loadingToast').hide();                                                                                                
+                                    }
+
+                                },
+                                error: function(xhr, type){
+                                    console.log(xhr);
+                                    alert('Ajax error!')
+                                }
+                            });   
 
                         },
                         error: function(xhr, type){
                             console.log(xhr);
                             alert('Ajax error!')
                         }
-                    });                                                                  
+                    });  
+
+                                                               
                 }
 
             },

@@ -6,6 +6,7 @@
 		<link type="text/css" href="../styles/css/info.css" rel="stylesheet" />
 		<link rel="icon" href="../img/favicon.ico" type="image/x-icon" />
 		<link rel="shortcut icon" href="../img/favicon.ico" type="image/x-icon" />
+		<link type="text/css" href="../styles/css/weui.min.css" rel="stylesheet" />
 		<title>宿舍管理系统 - DMS</title>
 	</head>
 	<body>
@@ -34,6 +35,7 @@
 						<form id="uploadBedInfoForm" action="http://localhost:4000/uploadBedInfo" name="bedInfo" method="post" enctype= "multipart/form-data" style="display: none;"> 
 							<input id="uploadBedInfo" type="file" name="upfile" />  
 						</form>  
+						<span class="btn btn-blue js-output">导出成Excel</span>
 						<span class="btn btn-yellow js-distribute">分配学生</span>
 						<span class="btn btn-orange js-checkin">办理入住</span>
 						<span class="btn btn-blue js-checkout">办理退宿</span>
@@ -75,9 +77,16 @@
 					</table>
 				</div>
 			</div>
+			<div id="loadingToast" style="opacity: 1; display: block;" v-if="loading">
+				<div class="weui-mask"></div>
+				<div class="weui-toast">
+					<i class="weui-loading weui-icon_toast"></i>
+					<p class="weui-toast__content" id="loadingMsg">{{ loadingContent }}</p>
+				</div>
+			</div>
 		</div>
 		<div class="modal">
-			<div class="modal-content student">
+			<div class="modal-content student" style="height: 172px;">
 				<span class="title"><strong>分配住宿学生</strong></span>
 				<div class="row">
 					<div class="sm-item">
@@ -101,10 +110,13 @@
 					<span class="btn btn-green js-submit">确认</span><span class="btn btn-red js-cancel">取消</span>
 				</div>
 			</div>
+
 		</div>
 		<script type="text/javascript" src="../scripts/vue.js"></script>
 		<script type="text/javascript" src="../scripts/zepto.min.js"></script>
 		<script type="text/javascript" src="../scripts/common.js"></script>
 		<script type="text/javascript" src="../scripts/bedInfo.js" charset="utf-8"></script>
+
+
 	</body>
 </html>

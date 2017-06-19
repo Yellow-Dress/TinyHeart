@@ -5,6 +5,9 @@ Zepto(function($){
     localStorage.removeItem('stuid');
 
     if (code != null) {
+        $('#loadingMsg').html('身份校验中');
+        $('#loadingToast').css('opacity', 1);
+        $('#loadingToast').show();
         $.ajax({  
             type: 'POST',
             url: 'http://localhost:4000/validateStudent',
@@ -12,7 +15,7 @@ Zepto(function($){
             data: { code: code },
             success: function(data){
                 if (data.isSuccess != undefined && data.isSuccess == false) {
-                    alert('服务器连接出现问题。');
+                    alert('服务器连接出现问题，请重新进入。');
                     return;
                 } 
                
@@ -27,10 +30,15 @@ Zepto(function($){
                 }              
                 
                 if (data.isValid != undefined && data.isValid == true) {
+                    $('#loadingToast').css('opacity', 0);
+                    $('#loadingToast').hide();    
                     localStorage.setItem('stuid', data.stuid);
                     window.location.href = "./personalPage.html";
                     return;
                 }
+
+                $('#loadingToast').css('opacity', 0);
+                $('#loadingToast').hide();    
             },
             error: function(xhr, type){
                 console.log(xhr);
