@@ -17,6 +17,7 @@ function getStudentList(){
         success: function(data){
         	console.log(data);
         	var students = data.data;
+            var len = students.length;
         	var html = '';
         	for(var i=0;i<students.length;i++){
         		html += '<tr>'+
@@ -25,7 +26,8 @@ function getStudentList(){
         				'<td>'+students[i].title+'</td>'+
         				'</tr>'
         	}
-        	console.log(students.length);
+            $('#stuNum').html(len);
+        	
         	$('#studentData').html(html)
             //window.location.href = '/home'
         }

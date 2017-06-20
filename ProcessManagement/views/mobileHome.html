@@ -23,8 +23,8 @@
                                 <p><%= post.title%></p>
                             </div>
                             <div class="weui-cell__ft">
-                                <% if (!post.status) { %>  未完成<% } %>
-                                <% if (post.status) { %> 已完成 <% } %>
+                                <% if (!post.status) { %>  <span class="label label-danger">未完成</span><% } %>
+                                <% if (post.status) { %> <span class="label label-success">已完成</span> <% } %>
                             </div>
                         </a>
                     <% }) %>
