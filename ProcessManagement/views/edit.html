@@ -1,0 +1,88 @@
+
+    <% include header.html %>  
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" style="color:#ffffff">报道流程管理</a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <% if (user) { %>
+              <li><a href="#">
+                <span class="glyphicon glyphicon-user" aria-hidden="true"/><span class="fontChange"> <%= user.user_name %></span></a></li>
+            <% } %>
+            
+            <li><a href="/logout">
+                <span class="glyphicon glyphicon-off" aria-hidden="true"/><span class="fontChange"> 退出</span></a></li>
+                      </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-sm-3 col-md-2 sidebar">
+          <ul class="nav nav-sidebar">
+            <li><a href="/home">
+                <span class="glyphicon glyphicon-home" aria-hidden="true"/><span class="fontChange"> 后台首页</span></a></li>
+            <li><a href="/post">
+                <span class="glyphicon glyphicon-cog" aria-hidden="true"/><span class="fontChange"> 添加流程</span></a></li>
+            <li><a href="/statistics">
+                <span class="glyphicon glyphicon-stats" aria-hidden="true"/><span class="fontChange"> 统计</span></a></li>
+            <li><a href="/manualConfirm">
+                <span class="glyphicon glyphicon-pencil" aria-hidden="true"/><span class="fontChange"> 人工确认</span></a></li>
+          </ul>
+         
+        </div>
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          
+          <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">流程修改</h3>
+            </div>
+            <div class="panel-body">
+                <div class="form-horizontal">
+                    <!-- <div class="form-group">
+                        <label for="experience_keyword" class="col-sm-1 control-label">标签</label>
+                        <div class="col-sm-5">
+                            <input type="text" name="key" class="form-control" id="keyword">
+                        </div>
+                    </div> -->
+                    <div class="form-group">
+                        <label for="title" class="col-sm-1 control-label">标题</label>
+                        <div class="col-sm-5">
+                            <input type="text" name="title" class="form-control" id="title" value="<%= post.title %>">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="content" class="col-sm-1 control-label">正文</label>                        
+                        <div class="col-sm-10 ">
+                            <textarea class="form-control" rows="10" id="inputContent" ><%= post.content%></textarea>
+                           <!-- <div>
+                                <input class="display-none" id="inputContent" value="<%=post.content%>">
+                                <script id="editor" type="text/plain" style="height:500px;"></script>\
+                            </div> -->
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-1 control-label"></div>
+                        <div class="col-sm-10 ">
+                            <button type="button" class="btn btn-success btn-sm fontChange" onclick="editProcess()">修 &nbsp;改</button>&nbsp;&nbsp;
+                            <button type="button" class="btn btn-danger btn-sm fontChange">取 &nbsp;消</button>
+                        </div>
+                    </div>
+                </div>
+                
+                
+        
+                
+           </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="/javascripts/jquery.min.js"></script> 
+    <script src="/javascripts/bootstrap.min.js"></script>
+    <script type="text/javascript" src="javascripts/edit.js"></script>
+    </body>
+ </html>

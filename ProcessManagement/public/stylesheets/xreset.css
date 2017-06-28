@@ -1,0 +1,132 @@
+.fontChange
+{
+    font-family:"微软雅黑";
+}
+
+.positionChange
+{
+    float:right;
+    margin-top:-23px;
+    margin-left: 10px;
+}
+
+.textPosition
+{
+    text-align:center;
+}
+
+.textareaPosition
+{
+    margin-left:30px;
+}
+
+.reportPos
+{
+    
+    float:right;
+}
+
+.pagePosition
+{
+    float:right;
+    margin-bottom:-10px;
+    margin-top:-10px;
+}
+.form-p {
+    margin-left: -10px;
+}
+
+.input-width{
+    width: 400px;
+    margin-bottom: 10px;
+}
+
+.lead{
+    word-wrap:break-word;
+}
+
+.cursor-hand{
+    cursor:pointer;
+}
+.adjust-fin{
+    display: none;
+}
+
+.adjust:focus{ 
+    outline: none;
+}
+
+.display-none{
+    display: none;
+}
+
+.modal-center{
+    width: 200px;
+    margin: 0 auto;
+}
+
+@media screen and (max-width:1024px) {
+    .input-width{
+        width: 100%;    
+    }
+
+    .form-signin {
+        position: static;
+        margin-top: 100px;
+        margin-right: 20px;
+        max-width: 330px;
+    }
+
+    .navbar-collapse.collapse{
+        display: block!important;
+        height: auto;
+        padding-bottom: 0;
+        overflow: visible;
+    }
+
+    .navbar-collapse{
+        width: auto;
+        border-top: 0;
+        box-shadow: none;
+    }
+
+    .navbar-right{
+        float: right;
+    }
+
+    .navbar-nav{
+        margin: 0;
+    }
+
+    .navbar-nav>li>a{
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+    .navbar-nav>li{
+        float: left;
+    }
+
+    .nav{
+        padding-left: 0;
+        list-style: none;
+    }
+
+    .navbar-collapse{
+        padding-right: 0;
+        padding-left: 0;
+    }
+
+    .navbar-header{
+        float: left;
+        margin-right: 0;
+        margin-left: 0;
+    }
+
+}
+@media screen and (max-width:420px) {
+    .form-signin {
+        position: static;
+        margin-top: 100px;
+        max-width: 330px;
+    }
+}

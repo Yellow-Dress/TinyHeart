@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+    <title><%= title %></title>
+    
+    <link href="/stylesheets/weui.min.css" rel="stylesheet">
+    <link href="/stylesheets/example.css" rel="stylesheet">
+    <!-- <link href="../public/stylesheets/weui.min.css" rel="stylesheet">
+    <link href="../public/stylesheets/example.css" rel="stylesheet"> -->
+</head>
+<body ontouchstart>
+    <div class="container" id="container">
+        <div class="page icons">
+            <div class="page__hd">
+                <h1 class="page__title">
+                    <% if (type=='detail') { %>  流程详情<% } %>
+                    <% if (type=='confirm') { %> 流程确认-<%=student%> <% } %>
+                </h1>
+                <p class="page__desc">
+                    <% if (type=='detail') { %>  仔细阅读流程详细内容哟<% } %>
+                    <% if (type=='confirm') { %> 状态：
+                        <% if (!post.status) { %>  未完成<% } %>
+                        <% if (post.status) { %> 已完成 <% } %>
+                    <% } %>
+                
+                </p>
+            </div>
+            <div class="page__bd">
+                <article class="weui-article">
+                    <h1><%= post.title %></h1>
+                    <section>
+                        <section>
+                            <p>
+                                <%- post.content %>
+                            </p>
+                        </section>
+                    </section>
+                </article>
+                <% if (type=='confirm'&&!post.status) { %> 
+                    <a href="/processConfirm?id=<%= student %>&code=<%=post.code_url%>" class="weui-btn weui-btn_primary">确认</a>
+                <% } %>
+                
+            </div>
+        </div>
+    </div>   
+</body>
+</html>
