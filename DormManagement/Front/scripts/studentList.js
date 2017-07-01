@@ -208,9 +208,10 @@ Zepto(function($){
     $('.js-submit').on('click', function() {
 
         var studentNo = $('.js-studentNo').val().trim(),
-            studentName = $('.js-studentName').val().trim();
+            studentName = $('.js-studentName').val().trim(),
+            sex = parseInt($('.js-sex').val());
         
-        if (studentNo.length == 0 || studentName.length == 0) {
+        if (studentNo.length == 0 || studentName.length == 0 || sex.length == 0) {
             alert('输入信息不完全！');
             return;
         }
@@ -224,7 +225,7 @@ Zepto(function($){
         $.ajax({
             type: 'POST',
             url: 'http://localhost:4000/addStudent',
-            data: { studentNo: studentNo, studentName: studentName },
+            data: { studentNo: studentNo, studentName: studentName, sex: sex },
             dataType: 'json',
             success: function(data){
                 if (data.isConnect == false) {
@@ -238,8 +239,8 @@ Zepto(function($){
                         }              
                     } else {
  
-                        studentInfo_vm._data.studentInfos.push({ studentNo: studentNo, studentName: studentName });
-                        studentInfosBackup.push({ studentNo: studentNo, studentName: studentName });
+                        studentInfo_vm._data.studentInfos.push({ studentNo: studentNo, studentName: studentName, sex: sex });
+                        studentInfosBackup.push({ studentNo: studentNo, studentName: studentName, sex: sex });
 
                         clearModal();
                         $('.modal').hide();

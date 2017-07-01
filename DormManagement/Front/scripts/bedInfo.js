@@ -2,6 +2,24 @@ Zepto(function($){
 
     var bedInfosBackup = {};
 
+    // var error = getQueryString('error');
+
+    // if (error != null) {
+    //     switch(error) {
+    //         case '1001':
+    //             alert('导出Excel失败，请重试'); 
+    //             break;
+    //     }
+    // }
+
+    // function getQueryString(name) {
+    //     var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+
+    //     var r = decodeURI(window.location.search).substr(1).match(reg);
+
+    //     if(r != null) return r[2]; return null;
+    // }   
+
     var bedInfo_vm = new Vue({
         el: '#bedInfo',
         data: {
@@ -323,6 +341,7 @@ Zepto(function($){
                             bedInfosBackup[backupIndex] = bedInfoObj;
                             console.log(bedInfo_vm._data.bedInfos);
                             console.log(bedInfosBackup);
+                            
                             if (bedInfoObj.usable == 1) {
                                 alert('已将床位设置为可用！');
                             } else {
@@ -403,7 +422,7 @@ Zepto(function($){
         var index = bedInfoBlock.data('index');
         var tempStr = JSON.stringify(bedInfo_vm._data.bedInfos[index]);
             bedInfoObj = JSON.parse(tempStr);
-
+        console.log(bedInfoObj)
         bedInfoObj.studentName = studentName;
         bedInfoObj.studentNo = studentNo;
         
@@ -424,12 +443,25 @@ Zepto(function($){
                         }  
                         return;            
                     } else {
-                        bedInfo_vm._data.bedInfos[index] = bedInfoObj;
-                        var backupIndex = bedInfosBackup.indexOf(bedInfoObj);
 
                         bedInfoObj.status = 1;
-                        bedInfo_vm._data.bedInfos[index] = bedInfoObj;
+
+                        var tempArr = bedInfo_vm.bedInfos.concat();
+                        tempArr[index] = bedInfoObj;
+                        bedInfo_vm._data.bedInfos = tempArr;
+
+                        var backupIndex = -1;
+
+                        for (var i = 0; i < bedInfosBackup.length; i++) {
+                            var obj = bedInfosBackup[i];
+                            if (obj.buildingNo == bedInfoObj.buildingNo && obj.roomNo == bedInfoObj.roomNo && obj.bedNo == bedInfoObj.bedNo) {
+                                backupIndex = i;
+                                break;
+                            }
+                        }
+
                         bedInfosBackup[backupIndex] = bedInfoObj;
+
                         clearModal();
                         $('.modal').hide();
                         alert('分配学生成功！');

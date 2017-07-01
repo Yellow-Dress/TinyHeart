@@ -42,7 +42,7 @@ app.all('*', function(req, res, next) {
     res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
     res.header("X-Powered-By",' 3.2.1')
     res.header("Content-Type", "application/json;charset=utf-8");
-    next();
+    next(); 
 });
 
 var sqlPool = mysql.createPool({
@@ -137,6 +137,182 @@ app.get('/getTemplate/:_info', function(req, res) {
         console.log(e)
         res.end(404);
     }
+});
+
+app.get('/getBedInfoOutput', function(req, res) {
+	var bedInfoQuerySql = "SELECT * FROM bed WHERE deleteBit=? ORDER BY buildingNo, roomNo, bedNo",
+		bedInfoQuerySql_Params = [0];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            // res.redirect('views/bedInfo.html?error=1001');
+            // TODO: 如果出错重定向要怎么alert
+            res.redirect('views/bedInfo.html');
+            return;
+        }
+
+        var sqlQuery = connection.query(bedInfoQuerySql, bedInfoQuerySql_Params, function(err, result) {
+            connection.release();
+
+            if (err) {
+                console.log(err);
+                // res.redirect('views/bedInfo.html?error=1001');
+                res.redirect('views/bedInfo.html');
+                return;
+            }
+            
+            var _headers = ['序号', '楼号', '宿舍号', '床位号', '性别', '状态', '是否可用', '学生学号', '学生姓名'];
+            var _data = [];
+
+            for (var i = 0; i < result.length; i++) {
+                var status = ['空床', '已分配', '已入住'];
+
+                var obj = {
+                    '序号': i + 1,
+                    '楼号': result[i].buildingNo,
+                    '宿舍号': result[i].roomNo,
+                    '床位号': result[i].bedNo,
+                    '性别': result[i].sex == '1' ? '男' : '女',
+                    '状态': status[result[i].status],
+                    '是否可用': result[i].usable == '1' ? '√' : '×',
+                    '学生学号': result[i].studentNo == null ? '' : result[i].studentNo,
+                    '学生姓名': result[i].studentName == null ? '' : result[i].studentName
+                }
+                
+                _data.push(obj);
+            };
+
+            var headers = _headers
+                            .map((v, i) => Object.assign({}, {v: v, position: String.fromCharCode(65+i) + 1 }))
+                            .reduce((prev, next) => Object.assign({}, prev, {[next.position]: {v: next.v}}), {});
+            var data = _data
+                        .map((v, i) => _headers.map((k, j) => Object.assign({}, { v: v[k], position: String.fromCharCode(65+j) + (i+2) })))
+                        .reduce((prev, next) => prev.concat(next))
+                        .reduce((prev, next) => Object.assign({}, prev, {[next.position]: {v: next.v}}), {});
+            // 合并 headers 和 data
+            var output = Object.assign({}, headers, data);
+            // 获取所有单元格的位置
+            var outputPos = Object.keys(output);
+            // 计算出范围
+            var ref = outputPos[0] + ':' + outputPos[outputPos.length - 1];
+            // 构建 workbook 对象
+            var wb = {
+                SheetNames: ['床位详情'],
+                Sheets: {
+                    '床位详情': Object.assign({}, output, { '!ref': ref })
+                }
+            };
+
+            var fileName = 'bedInfos.xlsx';
+            var filePath = path.join(__dirname, 'download/' + fileName);
+            
+            // 导出 Excel
+            xlsx.writeFile(wb, filePath);     
+                   
+            try {
+                var stats = fs.statSync(filePath);
+                if (stats.isFile()) {
+                    res.setHeader('Content-Type', 'application/octet-stream');
+                    res.setHeader('Content-Disposition', 'attachment; filename=' + fileName);
+                    res.setHeader('Content-Length', stats.size);
+                    fs.createReadStream(filePath).pipe(res);
+                } else {
+                    res.end(404);
+                }
+            } catch(e) {
+                console.log(e)
+                res.end(404);
+            }
+        });
+    })   
+});
+
+app.get('/getXinShengBedInfoOutput', function(req, res) {
+	var studentInfoQuerySql = "SELECT s.id, s.studentNo, s.studentName, s.sex, b.buildingNo, b.roomNo, b.bedNo FROM student s LEFT JOIN bed b on (s.studentNo = b.studentNo) WHERE s.deleteBit=0 ORDER BY s.studentNo",
+		studentInfoQuerySql_Params = [0];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            // res.redirect('views/bedInfo.html?error=1001');
+            // TODO: 如果出错重定向要怎么alert
+            res.redirect('views/bedInfo.html');
+            return;
+        }
+
+        var sqlQuery = connection.query(studentInfoQuerySql, studentInfoQuerySql_Params, function(err, result) {
+            connection.release();
+
+            if (err) {
+                console.log(err);
+                // res.redirect('views/bedInfo.html?error=1001');
+                // TODO: 如果出错重定向要怎么alert
+                res.redirect('views/bedInfo.html');
+                return;
+            }
+
+            var _headers = ['序号', '学号', '姓名', '性别', '楼号', '宿舍号', '床位号'];
+            var _data = [];
+
+            for (var i = 0; i < result.length; i++) {
+               
+                var obj = {
+                    '序号': i + 1,
+                    '学号': result[i].studentNo,
+                    '姓名': result[i].studentName,
+                    '性别': result[i].sex == '1' ? '男' : '女',
+                    '楼号': result[i].buildingNo == null ? '' : result[i].buildingNo,
+                    '宿舍号': result[i].roomNo == null ? '' : result[i].roomNo,
+                    '床位号': result[i].bedNo == null ? '' : result[i].bedNo
+                }
+                
+                _data.push(obj);
+            };
+
+            var headers = _headers
+                            .map((v, i) => Object.assign({}, {v: v, position: String.fromCharCode(65+i) + 1 }))
+                            .reduce((prev, next) => Object.assign({}, prev, {[next.position]: {v: next.v}}), {});
+            var data = _data
+                        .map((v, i) => _headers.map((k, j) => Object.assign({}, { v: v[k], position: String.fromCharCode(65+j) + (i+2) })))
+                        .reduce((prev, next) => prev.concat(next))
+                        .reduce((prev, next) => Object.assign({}, prev, {[next.position]: {v: next.v}}), {});
+            // 合并 headers 和 data
+            var output = Object.assign({}, headers, data);
+            // 获取所有单元格的位置
+            var outputPos = Object.keys(output);
+            // 计算出范围
+            var ref = outputPos[0] + ':' + outputPos[outputPos.length - 1];
+            // 构建 workbook 对象
+            var wb = {
+                SheetNames: ['新生选宿舍情况'],
+                Sheets: {
+                    '新生选宿舍情况': Object.assign({}, output, { '!ref': ref })
+                }
+            };
+
+            var fileName = 'XinSheng.xlsx';
+            var filePath = path.join(__dirname, 'download/' + fileName);
+            
+            // 导出 Excel
+            xlsx.writeFile(wb, filePath);     
+                   
+            try {
+                var stats = fs.statSync(filePath);
+                if (stats.isFile()) {
+                    res.setHeader('Content-Type', 'application/octet-stream');
+                    res.setHeader('Content-Disposition', 'attachment; filename=' + fileName);
+                    res.setHeader('Content-Length', stats.size);
+                    fs.createReadStream(filePath).pipe(res);
+                } else {
+                    res.end(404);
+                }
+            } catch(e) {
+                console.log(e)
+                res.end(404);
+            }
+        });
+    })  
 });
 
 app.post('/uploadBedInfo', function(req, res) {
@@ -266,7 +442,7 @@ app.post('/getDormInfo', function(req, res) {
 app.post('/getStudentInfos', function(req, res) {
 	// var studentInfoQuerySql = "SELECT * FROM student WHERE deleteBit=? ORDER BY studentNo",
     
-	var studentInfoQuerySql = "SELECT s.id, s.studentNo, s.studentName, b.roomNo FROM student s LEFT JOIN bed b on (s.studentNo = b.studentNo) WHERE s.deleteBit=0 ORDER BY s.studentNo DESC",
+	var studentInfoQuerySql = "SELECT s.id, s.studentNo, s.sex, s.studentName, b.roomNo FROM student s LEFT JOIN bed b on (s.studentNo = b.studentNo) WHERE s.deleteBit=0 ORDER BY s.studentNo",
 		studentInfoQuerySql_Params = [0];
 
     sqlPool.getConnection(function(err, connection) {
@@ -327,6 +503,8 @@ app.post('/logout', function(req, res) {
 });
 
 app.post('/checkin', function(req, res) {
+    utils.checkLogin(req, res);
+    
     var buildingNo = req.body.buildingNo,
         roomNo = req.body.roomNo,
         bedNo = req.body.bedNo;
@@ -696,7 +874,8 @@ app.post('/addDorm', function(req, res) {
 
 app.post('/addStudent', function(req, res) {
     var studentNo = req.body.studentNo,
-        studentName = req.body.studentName;
+        studentName = req.body.studentName,
+        sex = req.body.sex;
 
     var studentInfoQuerySql = "SELECT * FROM student WHERE studentNo=?",
         studentInfoQuerySql_Params = [studentNo];
@@ -715,8 +894,8 @@ app.post('/addStudent', function(req, res) {
             }
             if (result.length == 0) {
 
-                var studentInfoInsertSql = "INSERT INTO student(studentNo, studentName, code) VALUES(?, ?, ?)",
-                    studentInfoInsertSql_Params = [studentNo, studentName, Math.random().toString(36).substr(2).substr(0, 7)];
+                var studentInfoInsertSql = "INSERT INTO student(studentNo, studentName, sex, code) VALUES(?, ?, ?, ?)",
+                    studentInfoInsertSql_Params = [studentNo, studentName, sex, Math.random().toString(36).substr(2).substr(0, 7)];
 
                 sqlPool.getConnection(function(err, connection) {
                     if (err) {
@@ -741,8 +920,8 @@ app.post('/addStudent', function(req, res) {
                 if (studentInfoObj['deleteBit'] == 0) {
                     res.send( {isConnect: true, isSuccess: false, errorMsg: '已存在该学号信息。'} );
                 } else {
-                    var studentInfoUpdateSql = "UPDATE student SET deleteBit=?, studentName=? WHERE studentNo=?",
-                        studentInfoUpdateSql_Params = [0, studentName, studentNo];
+                    var studentInfoUpdateSql = "UPDATE student SET deleteBit=?, studentName=?, sex=? WHERE studentNo=?",
+                        studentInfoUpdateSql_Params = [0, studentName, sex, studentNo];
 
                     sqlPool.getConnection(function(err, connection) {
                         if (err) {
@@ -1298,8 +1477,8 @@ function updateStudentInfoByExcel(filePath) {
                                         if (studentInfoResultObj['deleteBit'] == 1) {
                                             // 已存在但是被删除了，则修改deleteBit和更新studentName
 
-                                            var studentInfoUpdateSql = "UPDATE student SET deleteBit=?, studentName=? WHERE studentNo=?",
-                                                studentInfoUpdateSql_Params = [0, studentInfoObj['studentName'], studentInfoObj['studentNo']];
+                                            var studentInfoUpdateSql = "UPDATE student SET deleteBit=?, studentName=?, sex=? WHERE studentNo=?",
+                                                studentInfoUpdateSql_Params = [0, studentInfoObj['studentName'], studentInfoObj['sex'], studentInfoObj['studentNo']];
 
                                             sqlPool.getConnection(function(err, connection) {
                                                 if (err) {
@@ -1320,8 +1499,8 @@ function updateStudentInfoByExcel(filePath) {
                                             });                                          
                                         } else {
                                             console.log(studentInfoObj['studentName'])
-                                            var studentInfoUpdateSql = "UPDATE student SET studentName=? WHERE studentNo=?",
-                                                studentInfoUpdateSql_Params = [studentInfoObj['studentName'], studentInfoObj['studentNo']];
+                                            var studentInfoUpdateSql = "UPDATE student SET studentName=?, sex=? WHERE studentNo=?",
+                                                studentInfoUpdateSql_Params = [studentInfoObj['studentName'], studentInfoObj['sex'], studentInfoObj['studentNo']];
 
                                             sqlPool.getConnection(function(err, connection) {
                                                 if (err) {
@@ -1344,8 +1523,8 @@ function updateStudentInfoByExcel(filePath) {
                                         
                                     } else {
                                         // 没有该学生记录，则插入
-                                        var studentInfoInsertSql = "INSERT INTO student(studentNo, studentName, code) VALUES(?, ?, ?)",
-                                            studentInfoInsertSql_Params = [studentInfoObj['studentNo'], studentInfoObj['studentName'], Math.random().toString(36).substr(2).substr(0, 7)];                                    
+                                        var studentInfoInsertSql = "INSERT INTO student(studentNo, studentName, sex, code) VALUES(?, ?, ?, ?)",
+                                            studentInfoInsertSql_Params = [studentInfoObj['studentNo'], studentInfoObj['studentName'], studentInfoObj['sex'], Math.random().toString(36).substr(2).substr(0, 7)];                                    
                                         console.log('not exist')
                                         sqlPool.getConnection(function(err, connection) {
                                             if (err) {
@@ -2017,6 +2196,12 @@ function validateStudentInfo(studentInfoObj, recordCount) {
     // 检测是否姓名为空
     if (studentInfoObj['studentName'] == undefined) {
         log.write(logPath_student, "第" + recordCount + "条记录缺少姓名。");
+        flag = false;
+    } 
+
+    // 检测是否性别为空
+    if (studentInfoObj['sex'] == undefined) {
+        log.write(logPath_student, "第" + recordCount + "条记录缺少性别信息。");
         flag = false;
     } 
 

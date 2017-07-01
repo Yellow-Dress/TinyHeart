@@ -168,7 +168,11 @@ module.exports = {
 
                 if (value.indexOf('姓名') != -1) {
                     headers[col] = 'studentName';
-                }      
+                }
+
+                if (value.indexOf('性别') != -1) {
+                    headers[col] = 'sex';
+                }
 
                 return;
             }
@@ -183,7 +187,14 @@ module.exports = {
                     break;   
                 case 'studentName':
                     value = (value + '').trim();
-                    break;                                      
+                    break;
+                case 'sex':
+                    if (value == '男') {
+                        value = 1;
+                    } else if (value == '女') {
+                        value = 0;
+                    }                        
+                    break;                                         
             }
             data[row][headers[col]] = value;
         })
@@ -203,6 +214,13 @@ module.exports = {
                 resolveFunc(accountInfo);
             }            
         })
+    },
+    checkLogin: function(req, res) {
+        if (!req.session.user) {
+            console.log('未登录！');
+            res.end();
+            res.redirect('views/index.html');
+        }
     }
 }
 
