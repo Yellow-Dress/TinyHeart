@@ -473,6 +473,35 @@ app.post('/getStudentInfos', function(req, res) {
     })    
 });
 
+
+
+app.post('/getBuildingInfos', function(req, res) {
+	// var studentInfoQuerySql = "SELECT * FROM student WHERE deleteBit=? ORDER BY studentNo",
+    
+	var buildingInfoQuerySql = "SELECT * FROM building WHERE deleteBit=? ORDER BY buildingNo",
+		buildingInfoQuerySql_Params = [0];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(buildingInfoQuerySql, buildingInfoQuerySql_Params, function(err, result) {
+            connection.release();
+
+            if (err) {
+                console.log(err);
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+
+            res.send( {isConnect: true, isSuccess: true, buildingInfos: result} );
+
+        });
+    })    
+});
+
+
 app.post('/getErrorMsg', function(req, res) {
     var from = req.body.from,
         logPath;
@@ -678,6 +707,56 @@ app.post('/usable',  function(req, res) {
     });      
 });
 
+app.post('/status', function(req, res) {
+    var buildingNo = req.body.buildingNo;
+
+    var buildingInfoQuerySql = "SELECT * FROM building WHERE buildingNo=?",
+        buildingInfoQuerySql_Params = [buildingNo];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(buildingInfoQuerySql, buildingInfoQuerySql_Params, function(err, result) {
+            connection.release();
+            if (err) {
+                console.log(err);
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+        
+            if (result.length > 0) {
+                var buildingInfoObj = result[0];
+
+                var buildingInfoUpdateSql = "UPDATE building SET status=? WHERE buildingNo=?",
+                    buildingInfoUpdateSql_Params = [buildingInfoObj['status'] ^ 1, buildingInfoObj['buildingNo']];
+
+                sqlPool.getConnection(function(err, connection) {
+                    if (err) {
+                        console.log(err);
+                        res.send( {isConnect: false, isSuccess: false} );
+                    }
+
+                    var sqlQuery = connection.query(buildingInfoUpdateSql, buildingInfoUpdateSql_Params, function(err, result) {
+                        connection.release();
+                        if (err) {
+                            console.log(err);
+                            res.send( {isConnect: true, isSuccess: false} );
+                        }
+                        
+                        res.send( {isConnect: true, isSuccess: true} );
+
+                    });
+                });
+              
+            } else {
+                res.send( {isConnect: true, isSuccess: false, errorMsg: '宿舍楼信息错误，请检查楼号。'} );
+            }
+        });
+    });       
+});
+
 app.post('/distribute', function(req, res) {
     var buildingNo = req.body.buildingNo,
         roomNo = req.body.roomNo,
@@ -802,8 +881,8 @@ app.post('/addDorm', function(req, res) {
     var buildingNo = req.body.buildingNo,
         roomNo = req.body.roomNo;
 
-    var dormInfoQuerySql = "SELECT * FROM dorm WHERE buildingNo=? AND roomNo=?",
-        dormInfoQuerySql_Params = [buildingNo, roomNo];
+    var buildingInfoQuerySql = "SELECT * FROM building WHERE buildingNo=? AND deleteBit=?",
+        buildingInfoQuerySql_Params = [buildingNo, 0];
 
     sqlPool.getConnection(function(err, connection) {
         if (err) {
@@ -811,65 +890,160 @@ app.post('/addDorm', function(req, res) {
             res.send( {isConnect: false, isSuccess: false} );
         }
 
-        var sqlQuery = connection.query(dormInfoQuerySql, dormInfoQuerySql_Params, function(err, result) {
+        var sqlQuery = connection.query(buildingInfoQuerySql, buildingInfoQuerySql_Params, function(err, result) {
             connection.release();
             if (err) {
                 console.log(err);
                 res.send( {isConnect: true, isSuccess: false} );
             }
-            if (result.length == 0) {
 
-                var dormInfoInsertSql = "INSERT INTO dorm(buildingNo, roomNo) VALUES(?, ?)",
-                    dormInfoInsertSql_Params = [buildingNo, roomNo];
+            // 如果宿舍号不存在
+            if (result.length == 0) {
+                res.send( {isConnect: true, isSuccess: false, errorMsg: '不存在该宿舍楼信息。'} );          
+                return;
+            } else {
+                var dormInfoQuerySql = "SELECT * FROM dorm WHERE buildingNo=? AND roomNo=?",
+                    dormInfoQuerySql_Params = [buildingNo, roomNo];
 
                 sqlPool.getConnection(function(err, connection) {
                     if (err) {
                         console.log(err);
                         res.send( {isConnect: false, isSuccess: false} );
+                        return;
                     }
 
-                    var sqlQuery = connection.query(dormInfoInsertSql, dormInfoInsertSql_Params, function(err, result) {
+                    var sqlQuery = connection.query(dormInfoQuerySql, dormInfoQuerySql_Params, function(err, result) {
                         connection.release();
                         if (err) {
                             console.log(err);
                             res.send( {isConnect: true, isSuccess: false} );
                         }
+                        if (result.length == 0) {
+
+                            var dormInfoInsertSql = "INSERT INTO dorm(buildingNo, roomNo) VALUES(?, ?)",
+                                dormInfoInsertSql_Params = [buildingNo, roomNo];
+
+                            sqlPool.getConnection(function(err, connection) {
+                                if (err) {
+                                    console.log(err);
+                                    res.send( {isConnect: false, isSuccess: false} );
+                                }
+
+                                var sqlQuery = connection.query(dormInfoInsertSql, dormInfoInsertSql_Params, function(err, result) {
+                                    connection.release();
+                                    if (err) {
+                                        console.log(err);
+                                        res.send( {isConnect: true, isSuccess: false} );
+                                    }
+                                    
+                                    res.send( {isConnect: true, isSuccess: true} );
+
+                                });
+                            });
                         
-                        res.send( {isConnect: true, isSuccess: true} );
+                        } else {
+                            var dormInfoObj = result[0];
+                            if (dormInfoObj['deleteBit'] == 0) {
+                                res.send( {isConnect: true, isSuccess: false, errorMsg: '已存在该宿舍信息。'} );
+                            } else {
+                                var dormInfoDeleteSql = "UPDATE dorm SET deleteBit=? WHERE buildingNo=? AND roomNo=?",
+                                    dormInfoDeleteSql_Params = [0, dormInfoObj['buildingNo'], dormInfoObj['roomNo']];
 
-                    });
-                });
-              
-            } else {
-                var dormInfoObj = result[0];
-                if (dormInfoObj['deleteBit'] == 0) {
-                    res.send( {isConnect: true, isSuccess: false, errorMsg: '已存在该宿舍信息。'} );
-                } else {
-                    var dormInfoDeleteSql = "UPDATE dorm SET deleteBit=? WHERE buildingNo=? AND roomNo=?",
-                        dormInfoDeleteSql_Params = [0, dormInfoObj['buildingNo'], dormInfoObj['roomNo']];
+                                sqlPool.getConnection(function(err, connection) {
+                                    if (err) {
+                                        console.log(err);
+                                        res.send( {isConnect: false, isSuccess: false} );
+                                    }
 
-                    sqlPool.getConnection(function(err, connection) {
-                        if (err) {
-                            console.log(err);
-                            res.send( {isConnect: false, isSuccess: false} );
-                        }
+                                    var sqlQuery = connection.query(dormInfoDeleteSql, dormInfoDeleteSql_Params, function(err, result) {
+                                        connection.release();
+                                        if (err) {
+                                            console.log(err);
+                                            res.send( {isConnect: true, isSuccess: false} );
+                                        }
+                                        
+                                        res.send( {isConnect: true, isSuccess: true} );
 
-                        var sqlQuery = connection.query(dormInfoDeleteSql, dormInfoDeleteSql_Params, function(err, result) {
-                            connection.release();
-                            if (err) {
-                                console.log(err);
-                                res.send( {isConnect: true, isSuccess: false} );
+                                    });
+                                });                   
                             }
                             
-                            res.send( {isConnect: true, isSuccess: true} );
-
-                        });
-                    });                   
-                }
+                        }
+                    });
+                });  
                 
             }
         });
     });  
+
+    // var dormInfoQuerySql = "SELECT * FROM dorm WHERE buildingNo=? AND roomNo=?",
+    //     dormInfoQuerySql_Params = [buildingNo, roomNo];
+
+    // sqlPool.getConnection(function(err, connection) {
+    //     if (err) {
+    //         console.log(err);
+    //         res.send( {isConnect: false, isSuccess: false} );
+    //     }
+
+    //     var sqlQuery = connection.query(dormInfoQuerySql, dormInfoQuerySql_Params, function(err, result) {
+    //         connection.release();
+    //         if (err) {
+    //             console.log(err);
+    //             res.send( {isConnect: true, isSuccess: false} );
+    //         }
+    //         if (result.length == 0) {
+
+    //             var dormInfoInsertSql = "INSERT INTO dorm(buildingNo, roomNo) VALUES(?, ?)",
+    //                 dormInfoInsertSql_Params = [buildingNo, roomNo];
+
+    //             sqlPool.getConnection(function(err, connection) {
+    //                 if (err) {
+    //                     console.log(err);
+    //                     res.send( {isConnect: false, isSuccess: false} );
+    //                 }
+
+    //                 var sqlQuery = connection.query(dormInfoInsertSql, dormInfoInsertSql_Params, function(err, result) {
+    //                     connection.release();
+    //                     if (err) {
+    //                         console.log(err);
+    //                         res.send( {isConnect: true, isSuccess: false} );
+    //                     }
+                        
+    //                     res.send( {isConnect: true, isSuccess: true} );
+
+    //                 });
+    //             });
+              
+    //         } else {
+    //             var dormInfoObj = result[0];
+    //             if (dormInfoObj['deleteBit'] == 0) {
+    //                 res.send( {isConnect: true, isSuccess: false, errorMsg: '已存在该宿舍信息。'} );
+    //             } else {
+    //                 var dormInfoDeleteSql = "UPDATE dorm SET deleteBit=? WHERE buildingNo=? AND roomNo=?",
+    //                     dormInfoDeleteSql_Params = [0, dormInfoObj['buildingNo'], dormInfoObj['roomNo']];
+
+    //                 sqlPool.getConnection(function(err, connection) {
+    //                     if (err) {
+    //                         console.log(err);
+    //                         res.send( {isConnect: false, isSuccess: false} );
+    //                     }
+
+    //                     var sqlQuery = connection.query(dormInfoDeleteSql, dormInfoDeleteSql_Params, function(err, result) {
+    //                         connection.release();
+    //                         if (err) {
+    //                             console.log(err);
+    //                             res.send( {isConnect: true, isSuccess: false} );
+    //                         }
+                            
+    //                         res.send( {isConnect: true, isSuccess: true} );
+
+    //                     });
+    //                 });                   
+    //             }
+                
+    //         }
+    //     });
+    // });  
 });
 
 app.post('/addStudent', function(req, res) {
@@ -946,6 +1120,79 @@ app.post('/addStudent', function(req, res) {
     });  
 });
 
+app.post('/addBuilding', function(req, res) {
+    var buildingNo = req.body.buildingNo,
+        buildingName = req.body.buildingName;
+
+    var buildingInfoQuerySql = "SELECT * FROM building WHERE buildingNo=?",
+        buildingInfoQuerySql_Params = [buildingNo];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(buildingInfoQuerySql, buildingInfoQuerySql_Params, function(err, result) {
+            connection.release();
+            if (err) {
+                console.log(err);
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+            if (result.length == 0) {
+
+                var buildingInfoInsertSql = "INSERT INTO building(buildingNo, buildingName) VALUES(?, ?)",
+                    buildingInfoInsertSql_Params = [buildingNo, buildingName];
+
+                sqlPool.getConnection(function(err, connection) {
+                    if (err) {
+                        console.log(err);
+                        res.send( {isConnect: false, isSuccess: false} );
+                    }
+
+                    var sqlQuery = connection.query(buildingInfoInsertSql, buildingInfoInsertSql_Params, function(err, result) {
+                        connection.release();
+                        if (err) {
+                            console.log(err);
+                            res.send( {isConnect: true, isSuccess: false} );
+                        }
+                        
+                        res.send( {isConnect: true, isSuccess: true} );
+
+                    });
+                });
+              
+            } else {
+                var buildingInfoObj = result[0];
+                if (buildingInfoObj['deleteBit'] == 0) {
+                    res.send( {isConnect: true, isSuccess: false, errorMsg: '已存在该宿舍楼信息。'} );
+                } else {
+                    var buildingInfoUpdateSql = "UPDATE building SET deleteBit=?, buildingName=? WHERE buildingNo=?",
+                        buildingInfoUpdateSql_Params = [0, buildingName, buildingNo];
+
+                    sqlPool.getConnection(function(err, connection) {
+                        if (err) {
+                            console.log(err);
+                            res.send( {isConnect: false, isSuccess: false} );
+                        }
+
+                        var sqlQuery = connection.query(buildingInfoUpdateSql, buildingInfoUpdateSql_Params, function(err, result) {
+                            connection.release();
+                            if (err) {
+                                console.log(err);
+                                res.send( {isConnect: true, isSuccess: false} );
+                            }
+                            
+                            res.send( {isConnect: true, isSuccess: true} );
+
+                        });
+                    });                   
+                }              
+            }
+        });
+    }); 
+});
+
 app.post('/deleteDorm', function(req, res) {
     var buildingNo = req.body.buildingNo,
         roomNo = req.body.roomNo;
@@ -984,8 +1231,26 @@ app.post('/deleteDorm', function(req, res) {
                             res.send( {isConnect: true, isSuccess: false} );
                         }
                         
-                        res.send( {isConnect: true, isSuccess: true} );
+                        var bedInfoDeleteSql = "UPDATE bed SET deleteBit=? WHERE buildingNo=? AND roomNo=?",
+                            bedInfoDeleteSql_Params = [1, buildingNo, roomNo];
 
+                        sqlPool.getConnection(function(err, connection) {
+                            if (err) {
+                                console.log(err);
+                                res.send( {isConnect: false, isSuccess: false} );
+                            }
+
+                            var sqlQuery = connection.query(bedInfoDeleteSql, bedInfoDeleteSql_Params, function(err, result) {
+                                connection.release();
+                                if (err) {
+                                    console.log(err);
+                                    res.send( {isConnect: true, isSuccess: false} );
+                                }
+                                
+                                res.send( {isConnect: true, isSuccess: true} );
+
+                            });
+                        });
                     });
                 });
               
@@ -1045,6 +1310,94 @@ app.post('/deleteStudent', function(req, res) {
         });
     });  
 });
+
+app.post('/deleteBuilding', function(req, res) {
+    var buildingNo = req.body.buildingNo,
+        buildingName = req.body.buildingName;
+
+    var buildingInfoQuerySql = "SELECT * FROM building WHERE buildingNo=? AND deleteBit=?",
+        buildingInfoQuerySql_Params = [buildingNo, 0];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(buildingInfoQuerySql, buildingInfoQuerySql_Params, function(err, result) {
+            connection.release();
+            if (err) {
+                console.log(err);
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+        
+            if (result.length > 0) {
+
+                var buildingInfoDeleteSql = "UPDATE building SET deleteBit=? WHERE buildingNo=?",
+                    buildingInfoDeleteSql_Params = [1, buildingNo];
+
+                sqlPool.getConnection(function(err, connection) {
+                    if (err) {
+                        console.log(err);
+                        res.send( {isConnect: false, isSuccess: false} );
+                    }
+
+                    var sqlQuery = connection.query(buildingInfoDeleteSql, buildingInfoDeleteSql_Params, function(err, result) {
+                        connection.release();
+                        if (err) {
+                            console.log(err);
+                            res.send( {isConnect: true, isSuccess: false} );
+                        }
+                        
+
+                        // 删除该宿舍楼中的宿舍
+                        var dormInfoDeleteSql = "UPDATE dorm SET deleteBit=? WHERE buildingNo=?",
+                            dormInfoDeleteSql_Params = [1, buildingNo];
+
+                        sqlPool.getConnection(function(err, connection) {
+                            if (err) {
+                                console.log(err);
+                                res.send( {isConnect: false, isSuccess: false} );
+                            }
+
+                            var sqlQuery = connection.query(dormInfoDeleteSql, dormInfoDeleteSql_Params, function(err, result) {
+                                connection.release();
+                                if (err) {
+                                    console.log(err);
+                                    res.send( {isConnect: true, isSuccess: false} );
+                                }
+                                
+                                var bedInfoDeleteSql = "UPDATE bed SET deleteBit=? WHERE buildingNo=?",
+                                    bedInfoDeleteSql_Params = [1, buildingNo];
+
+                                sqlPool.getConnection(function(err, connection) {
+                                    if (err) {
+                                        console.log(err);
+                                        res.send( {isConnect: false, isSuccess: false} );
+                                    }
+
+                                    var sqlQuery = connection.query(bedInfoDeleteSql, bedInfoDeleteSql_Params, function(err, result) {
+                                        connection.release();
+                                        if (err) {
+                                            console.log(err);
+                                            res.send( {isConnect: true, isSuccess: false} );
+                                        }
+                                        
+                                        res.send( {isConnect: true, isSuccess: true} );    
+
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+              
+            } else {
+                res.send( {isConnect: true, isSuccess: false, errorMsg: '不存在该宿舍楼信息。'} );
+            }
+        });
+    });      
+})
 
 app.post('/checkDormInfo', function(req, res) {
     var dormInfoQuerySql = "SELECT * FROM dorm WHERE deleteBit=?",
@@ -1307,16 +1660,19 @@ function updateDormInfoByExcel(filePath) {
 
         var flag = true;
 
-        var recordCount = 1;
+        var recordCount = 0;
 
         async.each(utils.parseDormExcel(filePath), function(dormInfoObj, callback) {
-            if (validateDormInfo(dormInfoObj, recordCount)) {
-                dormInfoArr.push(dormInfoObj);
-            } else {
-                flag = false;
-            }
             recordCount++;
-            callback();
+            validateDormInfo(dormInfoObj, recordCount).then(function(validateFlag) {
+                if (validateFlag) {
+                    dormInfoArr.push(dormInfoObj);
+                } else {
+                    flag = false;
+                }
+
+                callback();
+            });
         }, function(err) {
             if (err) {
                 console.log(err);
@@ -1833,7 +2189,7 @@ app.post('/getAvailableDormStatus', function(req, res) {
                 }            
             });
 
-            var availableBedQuerySql = "SELECT buildingNo, roomNo, count(bedNo) available FROM bed WHERE status=? AND usable=? AND sex=? AND roomNo IN (SELECT roomNo FROM dorm) GROUP BY roomNo ORDER BY buildingNo, roomNo",
+            var availableBedQuerySql = "SELECT buildingNo, roomNo, count(bedNo) available FROM bed WHERE status=? AND usable=? AND sex=? AND buildingNo IN (SELECT buildingNo FROM building b WHERE b.status=1 AND b.deleteBit=0) AND roomNo IN (SELECT roomNo FROM dorm) GROUP BY roomNo ORDER BY buildingNo, roomNo",
                 availableBedQuerySql_Params = [0, 1, sex];
 
             sqlPool.getConnection(function(err, connection) {
@@ -1848,7 +2204,7 @@ app.post('/getAvailableDormStatus', function(req, res) {
                         console.log(err);
                         res.send( {errcode: 4001, msg: "数据库连接错误。"} );
                     }
-                    
+                    console.log(result);
                     availableBed = result;
 
                     for (var i = 0; i < preData.max5; i++) {
@@ -1893,7 +2249,7 @@ app.post('/confirmDistribute', function(req, res) {
 
     console.log(students)
 
-    var availableBedQuerySql = "SELECT buildingNo, roomNo, count(bedNo) available FROM bed WHERE buildingNo=? AND status=? AND usable=? AND sex=? AND roomNo IN (SELECT roomNo FROM dorm) GROUP BY roomNo ORDER BY buildingNo, roomNo",
+    var availableBedQuerySql = "SELECT buildingNo, roomNo, count(bedNo) available FROM bed WHERE buildingNo=? AND status=? AND usable=? AND sex=? AND buildingNo IN (SELECT buildingNo FROM building b WHERE b.status=1 AND b.deleteBit=0) AND roomNo IN (SELECT roomNo FROM dorm) GROUP BY roomNo ORDER BY buildingNo, roomNo",
         availableBedQuerySql_Params = [buildingNo, 0, 1, sex];
 
     sqlPool.getConnection(function(err, connection) {
@@ -1997,7 +2353,7 @@ app.post('/confirmDistribute', function(req, res) {
 app.post('/checkStudentStatus', function(req, res) {
     var stuid = req.body.stuid;
 
-    var bedInfoQuerySql = "SELECT * FROM bed WHERE studentNo=? AND deleteBit=?",
+    var bedInfoQuerySql = "SELECT * FROM bed LEFT JOIN building on (bed.buildingNo = building.buildingName) WHERE studentNo=? AND bed.deleteBit=?",
         bedInfoQuerySql_Params = [stuid, 0];
 
     sqlPool.getConnection(function(err, connection) {
@@ -2020,6 +2376,29 @@ app.post('/checkStudentStatus', function(req, res) {
             }
         });
     });    
+});
+
+// 清空新生名单
+app.post('/emptyStudents', function(req, res) {
+    var studentInfoEmptySql = "DELETE FROM student",
+        studentInfoEmptySql_Params = [];
+
+    sqlPool.getConnection(function(err, connection) {
+        if (err) {
+            console.log(err);
+            res.send( {isConnect: false, isSuccess: false} );
+        }
+
+        var sqlQuery = connection.query(studentInfoEmptySql, studentInfoEmptySql_Params, function(err, result) {
+            connection.release();
+            if (err) {
+                console.log(err);
+                res.send( {isConnect: true, isSuccess: false} );
+            }
+
+            res.send( {isConnect: true, isSuccess: true } );
+        });
+    });  
 });
 
 function validateBedInfo(bedInfoObj, recordCount) {
@@ -2107,7 +2486,10 @@ function validateBedInfo(bedInfoObj, recordCount) {
             sqlPool.getConnection(function(err, connection) {
                 if (err) {
                     console.log(err);
-                    callback(err);
+                    // callback(err);
+                    flag = false;
+                    resolve(flag);
+                    return;
                 }
 
                 var sqlQuery = connection.query(dormInfoQuerySql, dormInfoQuerySql_Params, function(err, result) {
@@ -2115,7 +2497,9 @@ function validateBedInfo(bedInfoObj, recordCount) {
 
                     if (err) {
                         console.log(err);
-                        callback(err);
+                        flag = false;
+                        resolve(flag);
+                        return;
                     }
                     
                     if (result.length > 0) {
@@ -2137,43 +2521,82 @@ function validateBedInfo(bedInfoObj, recordCount) {
 }
 
 function validateDormInfo(dormInfoObj, recordCount) {
+    return new Promise(function(resolve, reject) {
     var flag = true;
 
-    // 检测是否楼号为空
-    if (dormInfoObj['buildingNo'] == undefined) {
-        log.write(logPath_dorm, "第" + recordCount + "条记录缺少楼号。");
-        flag = false;
-    }
+        // 检测是否楼号为空
+        if (dormInfoObj['buildingNo'] == undefined) {
+            log.write(logPath_dorm, "第" + recordCount + "条记录缺少楼号。");
+            flag = false;
+        }
 
-    // 检测是否宿舍号为空
-    if (dormInfoObj['roomNo'] == undefined) {
-        log.write(logPath_dorm, "第" + recordCount + "条记录缺少宿舍号。");
-        flag = false;
-    } else {
-        // 根据不同楼号检测宿舍号的有效性
-        // 5号楼：4位数字；13号楼：F+4位数字；14号楼：E+4位数字
-        // if (dormInfoObj['buildingNo'] != undefined) {
-        //     var re;
-        //     switch(dormInfoObj['buildingNo']) {
-        //         case 5:
-        //             re = /^5\d{3}$/;
-        //             break;
-        //         case 13:
-        //             re = /^F\d{4}$/;
-        //             break;
-        //         case 14:
-        //             re = /^E\d{4}$/;              
-        //             break;
-        //     }
+        // 检测是否宿舍号为空
+        if (dormInfoObj['roomNo'] == undefined) {
+            log.write(logPath_dorm, "第" + recordCount + "条记录缺少宿舍号。");
+            flag = false;
+        } 
+        // else {
+            // 根据不同楼号检测宿舍号的有效性
+            // 5号楼：4位数字；13号楼：F+4位数字；14号楼：E+4位数字
+            // if (dormInfoObj['buildingNo'] != undefined) {
+            //     var re;
+            //     switch(dormInfoObj['buildingNo']) {
+            //         case 5:
+            //             re = /^5\d{3}$/;
+            //             break;
+            //         case 13:
+            //             re = /^F\d{4}$/;
+            //             break;
+            //         case 14:
+            //             re = /^E\d{4}$/;              
+            //             break;
+            //     }
 
-        //     if (!re.test(dormInfoObj['roomNo'])) {
-        //         log.write(logPath_dorm, "第" + recordCount + "条记录宿舍号格式错误。");
-        //         flag = false;                     
-        //     }
+            //     if (!re.test(dormInfoObj['roomNo'])) {
+            //         log.write(logPath_dorm, "第" + recordCount + "条记录宿舍号格式错误。");
+            //         flag = false;                     
+            //     }
+            // }
         // }
-    }
 
-    return flag;
+        // 判断楼号是否在宿舍楼表中
+        if (dormInfoObj['buildingNo'] != undefined) {
+            var buildingInfoQuerySql = "SELECT * FROM building WHERE buildingNo=? AND deleteBit=?",
+                buildingInfoQuerySql_Params = [dormInfoObj['buildingNo'], 0];
+
+            sqlPool.getConnection(function(err, connection) {
+                if (err) {
+                    console.log(err);
+                    flag = false;
+                    resolve(flag);
+                    return;
+                }
+
+                var sqlQuery = connection.query(buildingInfoQuerySql, buildingInfoQuerySql_Params, function(err, result) {
+                    connection.release();
+
+                    if (err) {
+                        console.log(err);
+                        flag = false;
+                        resolve(flag);
+                        return;
+                    }
+                    
+                    if (result.length > 0) {
+
+                    } else {
+
+                        log.write(logPath_dorm, "第" + recordCount + "条记录中的宿舍楼信息不存在。");
+                        flag = false;
+
+                    }
+                    resolve(flag);
+                });
+            });           
+        } else {
+            resolve(flag);
+        }
+    });
 }
 
 function validateStudentInfo(studentInfoObj, recordCount) {

@@ -9,6 +9,7 @@ Zepto(function($){
             available: true,
             distributed: false,
             buildingNo: '',
+            buildingName: '',
             roomNo: '',
             bedNo: ''
         },
@@ -55,6 +56,7 @@ Zepto(function($){
                                     } else {
                                         if (data.dormStatus != undefined) {
                                             personalPage_vm._data.buildingNo = data.dormStatus.buildingNo;
+                                            personalPage_vm._data.buildingName = data.dormStatus.buildingName;
                                             personalPage_vm._data.roomNo = data.dormStatus.roomNo;
                                             personalPage_vm._data.bedNo = data.dormStatus.bedNo;
                                             personalPage_vm._data.distributed = true;    

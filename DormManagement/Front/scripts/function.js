@@ -16,6 +16,10 @@ Zepto(function($){
         }
     });
 
+    $('.js-building').on('click', function() {
+        window.location.href = './buildingInfo.html';
+    });
+
     $('.js-dorm').on('click', function() {
         window.location.href = './dormInfo.html';
     });
