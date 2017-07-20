@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<link type="text/css" href="../styles/css/common.css" rel="stylesheet"/>
+		<link type="text/css" href="../styles/css/info.css" rel="stylesheet" />
+		<link rel="icon" href="../img/favicon.ico" type="image/x-icon" />
+		<link rel="shortcut icon" href="../img/favicon.ico" type="image/x-icon" />
+		<title>宿舍管理系统 - DMS</title>
+	</head>
+	<body>
+		<div class="nav">
+			<div class="logo">宿舍管理系统</div>
+			<div class="user">
+				<i class="iconfont">&#xe787;</i>admin
+				<span class="btn btn-green js-func" style="margin-left: 10px">返回功能选择</span>
+				<span class="btn btn-red js-logout" style="margin-left: 10px">退出</span>
+			</div>
+		</div>
+		<div class="content" id="studentInfo">
+			<div class="main-block large">
+				<div class="studentInfo-hd">
+					<span class="teacher-name"><strong>新生选宿舍名单管理</strong></span>
+					<span class="student-count" >共 <i>{{ studentInfos.length }}</i> 个，已有 {{ alreadyCount }} 个办理住宿</span>
+					<span style="margin-left: 60px">学号：</span>
+					<input class="search-input" type="text" id="studentNo-input" />
+					<span class="btn btn-blue js-studentNo-search">搜索</span>
+					<div class="operation-box">
+						<span class="btn btn-green"><a href="http://localhost:4000/getTemplate/studentInfo" style="text-decoration: none; color: #fff;">Excel模板下载</a></span>
+						<span class="btn btn-green js-upload">Excel导入</span>
+						<form id="uploadDormInfoForm" action="http://localhost:4000/uploadStudentInfo" name="studentInfo" method="post" enctype= "multipart/form-data" style="display: none;"> 
+							<input id="uploadDormInfo" type="file" name="upfile" />  
+						</form>  
+						<span class="btn btn-blue js-output"><a href="http://localhost:4000/getXinShengBedInfoOutput" style="text-decoration: none; color: #fff;">导出成Excel</a></span>
+						<span class="btn btn-orange js-add">新增</span>
+						<span class="btn btn-red js-delete">删除</span>
+						<span class="btn btn-blue js-empty">清空</span>
+					</div>
+				</div>
+				<div class="studentInfo-bd">
+					<table cellpadding="0" cellspacing="0" border="0">
+						<thead>
+							<tr>
+								<th style="width: 10px;"><input disabled="disabled" type="checkbox" class="js-selectAll"/></th>
+								<th style="width: 5%">学号</th>
+								<th style="width: 7%;">姓名</th>
+								<th style="width: 7%;">性别</th>
+								<th style="width: 7%;">宿舍号</th>
+							</tr>
+						</thead>
+						<tbody class="js-tbody">
+							<tr v-for="(studentInfo, index) in studentInfos" :data-index="index">
+								<td><input type="checkbox" class="js-selectOne" /></td>
+								<td>{{ studentInfo.studentNo }}</td>
+								<td>{{ studentInfo.studentName }}</td>	
+								<td v-if="studentInfo.sex == 0">女</td>
+								<td v-else-if="studentInfo.sex == 1">男</td>
+								<td>{{ studentInfo.roomNo }}</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="modal">
+			<div class="modal-content student" style="height: 200px;">
+				<span class="title"><strong>新增新生信息</strong></span>
+				<div class="row">
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">学号：</div>
+							<div class="input">
+								<input type="text" class="js-studentNo"/>
+							</div>
+						</div>
+					</div>
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">姓名：</div>
+							<div class="input">
+								<input type="text" class="js-studentName"/>
+							</div>
+						</div>
+					</div>
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">性别：</div>
+							<select class="input js-sex" style="height: 28px;">
+								<option value="1">男</option>
+								<option value="0">女</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="operation-box">
+					<span class="btn btn-green js-submit">确认</span><span class="btn btn-red js-cancel">取消</span>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../scripts/vue.js"></script>
+		<script type="text/javascript" src="../scripts/zepto.min.js"></script>
+		<script type="text/javascript" src="../scripts/common.js"></script>
+		<script type="text/javascript" src="../scripts/studentList.js" charset="utf-8"></script>
+	</body>
+</html>

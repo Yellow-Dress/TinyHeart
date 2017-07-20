@@ -1,34 +1,52 @@
 Zepto(function($){
-    $('.js-info').on('click', function() {
-        window.location.href = './teacherInfo.html';
+    $.ajax({
+        type: 'POST',
+        url: 'http://localhost:4000/checkLogin',
+        success: function(data){
+            console.log(data)
+            if (data.isSuccess == true) {
+
+            } else {
+                window.location.href = './index.html';
+            }
+        },
+        error: function(xhr, type){
+            console.log(xhr);
+            alert('Ajax error!')
+        }
     });
 
-    $('.js-eval').on('click', function() {
-        window.location.href = './schoolSelect.html';
-    })
+    $('.js-building').on('click', function() {
+        window.location.href = './buildingInfo.html';
+    });
 
-    $('.js-reboot').on('click', function() {
-        var checkQuestion = confirm("确认重置吗？");
+    $('.js-dorm').on('click', function() {
+        window.location.href = './dormInfo.html';
+    });
 
-        if (checkQuestion == true) {
-            $.ajax({
-                type: 'POST',
-                url: 'http://localhost:8888/reboot',
-                dataType: 'json',
-                success: function(data){
-                    if (data.studentSuccess == false) {
-                        alert("学生重置失败");
-                    } else if (data.teacherSuccess == false) {
-                        alert("教师重置失败");
+    $('.js-bed').on('click', function() {
+        $.ajax({
+            type: 'POST',
+            url: 'http://localhost:4000/checkDormInfo',
+            success: function(data){
+                if (data.isConnect == false) {
+                    alert('数据库连接失败！');
+                } else {
+                    if (data.isSuccess == false) {
+                        alert('宿舍编号信息为空，请先录入，才可以进行床位信息管理。')
                     } else {
-                        alert("重置成功，请手动删除对应Excel及图片");
+                        window.location.href = './bedInfo.html';
                     }
-                },
-                error: function(xhr, type){
-                    console.log(xhr);
-                    alert('Ajax error!')
                 }
-            });
-        }
-    })
+            },
+            error: function(xhr, type){
+                console.log(xhr);
+                alert('Ajax error!')
+            }
+        });
+    });
+
+    $('.js-list').on('click', function() {
+        window.location.href = './studentList.html';
+    });
 });

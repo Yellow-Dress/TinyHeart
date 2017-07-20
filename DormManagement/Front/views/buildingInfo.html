@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<link type="text/css" href="../styles/css/common.css" rel="stylesheet"/>
+		<link type="text/css" href="../styles/css/info.css" rel="stylesheet" />
+		<link rel="icon" href="../img/favicon.ico" type="image/x-icon" />
+		<link rel="shortcut icon" href="../img/favicon.ico" type="image/x-icon" />
+		<title>宿舍管理系统 - DMS</title>
+	</head>
+	<body>
+		<div class="nav">
+			<div class="logo">宿舍管理系统</div>
+			<div class="user">
+				<i class="iconfont">&#xe787;</i>admin
+				<span class="btn btn-green js-func" style="margin-left: 10px">返回功能选择</span>
+				<span class="btn btn-red js-logout" style="margin-left: 10px">退出</span>
+			</div>
+		</div>
+		<div class="content" id="buildingInfo">
+			<div class="main-block large">
+				<div class="studentInfo-hd">
+					<span class="teacher-name"><strong>宿舍楼号管理</strong></span>
+					<span class="student-count" >共 <i>{{ buildingInfos.length }}</i> 个</span>
+					<div class="operation-box">
+						<span class="btn btn-orange js-add">新增</span>
+						<span class="btn btn-red js-delete">删除</span>
+                        <span class="btn btn-green js-status">置为可用 / 不可用</span>
+					</div>
+				</div>
+				<div class="studentInfo-bd">
+					<table cellpadding="0" cellspacing="0" border="0">
+						<thead>
+							<tr>
+								<th style="width: 10px;"><input disabled="disabled" type="checkbox" class="js-selectAll"/></th>
+								<th style="width: 5%">楼号</th>
+								<th style="width: 7%;">楼名</th>
+								<th style="width: 7%;">是否可见</th>
+							</tr>
+						</thead>
+						<tbody class="js-tbody">
+							<tr v-for="(buildingInfo, index) in buildingInfos" :data-index="index">
+								<td><input type="checkbox" class="js-selectOne" /></td>
+								<td>{{ buildingInfo.buildingNo }}</td>
+								<td>{{ buildingInfo.buildingName }}</td>	
+								<td v-if="buildingInfo.status == 1" class="available"><strong>√</strong></td>
+								<td v-else class="unavailable"><strong>×</strong></td>		
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="modal">
+			<div class="modal-content student" style="height: 160px;">
+				<span class="title"><strong>新增宿舍楼信息</strong></span>
+				<div class="row">
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">楼号：</div>
+							<div class="input">
+								<input type="text" class="js-buildingNo"/>
+							</div>
+						</div>
+					</div>
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">楼名：</div>
+							<div class="input">
+								<input type="text" class="js-buildingName"/>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="operation-box">
+					<span class="btn btn-green js-submit">确认</span><span class="btn btn-red js-cancel">取消</span>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../scripts/vue.js"></script>
+		<script type="text/javascript" src="../scripts/zepto.min.js"></script>
+		<script type="text/javascript" src="../scripts/common.js"></script>
+		<script type="text/javascript" src="../scripts/buildingInfo.js" charset="utf-8"></script>
+	</body>
+</html>

@@ -1,0 +1,23 @@
+.weui-navbar__item {
+  padding: 8px 0; }
+
+.weui-cell {
+  font-size: 16px; }
+
+.btn-commit {
+  margin-top: 12px;
+  margin-bottom: 28px;
+  font-size: 16px; }
+
+span.right {
+  float: right; }
+
+.block {
+  padding: 12px;
+  border: 1px rgba(0, 0, 0, 0.2) solid; }
+  .block :last-child {
+    margin-bottom: 0; }
+  .block p {
+    margin-bottom: 0.3em; }
+
+/*# sourceMappingURL=dormManagement.css.map */

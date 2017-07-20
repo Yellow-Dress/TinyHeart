@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=0">
+        <title>办理住宿</title>
+        <!-- 引入 WeUI -->
+        <link type="text/css" href="../styles/css/weui.min.css" rel="stylesheet" />
+        <link type="text/css" href="../styles/css/example.css" rel="stylesheet" />
+        <link type="text/css" href="../styles/css/dormManagement.css" rel="stylesheet" />
+        <!--<link type="text/css" rel="stylesheet" href="//res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css"/>-->
+    </head>
+    <body>
+        <div class="container" id="container">
+            <div class="page icons js_show">
+                <div class="page__hd" style="padding-bottom: 16px;">
+                    <h1 class="page__title" >办理住宿</h1>
+                </div>
+                <div class="page__bd page__bd_spacing">
+                    <div class="weui-tab">
+                        <div class="weui-navbar">
+                            <div class="weui-navbar__item" v-bind:class="{ 'weui-bar__item_on' : !multiFlag }" v-on:click="toggleMulti(false)">
+                                单人办理
+                            </div>
+                            <div class="weui-navbar__item" v-bind:class="{ 'weui-bar__item_on' : multiFlag }" v-on:click="toggleMulti(true)">
+                                多人办理
+                            </div>
+                        </div>
+                        <div class="weui-tab__panel" style="padding-top: 19px">
+                            <div class="weui-cells">
+                                <div class="weui-cell">
+                                    <div class="weui-cell__hd"><label class="weui-label">姓名</label></div>
+                                    <div class="weui-cell__bd">
+                                        <label class="weui-label">{{ studentName }}</label>
+                                    </div>
+                                </div>
+                                <div class="weui-cell">
+                                    <div class="weui-cell__hd"><label class="weui-label">学号</label></div>
+                                    <div class="weui-cell__bd">
+                                        <label class="weui-label">{{ studentNo }}</label>
+                                    </div>
+                                </div>
+                                <div class="weui-cell">
+                                    <div class="weui-cell__hd"><label class="weui-label">性别</label></div>
+                                    <div class="weui-cell__bd">
+                                        <label class="weui-label">{{ sex }}</label>
+                                    </div>
+                                </div>
+                                <div class="weui-cell weui-cell_select weui-cell_select-after">
+                                    <div class="weui-cell__hd">
+                                        <label for="" class="weui-label">目标宿舍楼</label>
+                                    </div>
+                                    <div class="weui-cell__bd">
+                                        <select class="weui-select" name="buidingNo" v-on:change="selectChange">
+                                            <option value="5">5号楼</option>
+                                            <option value="13">13号楼</option>
+                                            <option value="14">14号楼</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="weui-cells__title" v-if="multiFlag">添加同住人<a style="margin-left: 8px; text-decoration: underline; color:#586C94" v-on:click="addParnterBtn">添加</a></div>
+                            <div class="weui-cells" v-if="multiFlag">
+                                 <div class="weui-cell weui-cell_vcode" v-for="(student,index) in validStudentList">
+                                    <div class="weui-cell__hd">
+                                        <label class="weui-label">同住人学号</label>
+                                    </div>
+                                    <div class="weui-cell__bd">
+                                        <label class="weui-label">{{ student.studentNo }}</label>
+                                    </div>
+                                    <div class="weui-cell__ft">
+                                        <button class="weui-vcode-btn" v-on:click="removePartner(index)" style="padding: 0"><i class="weui-icon-cancel"></i></button>
+                                    </div>
+                                </div>                               
+                                <div class="weui-cell weui-cell_vcode" v-if="addBlockSwitch">
+                                    <div class="weui-cell__hd">
+                                        <label class="weui-label">同住人学号</label>
+                                    </div>
+                                    <div class="weui-cell__bd">
+                                        <input class="weui-input" type="tel" placeholder="请输入学号" id="newPartnerId">
+                                    </div>
+                                    <div class="weui-cell__ft">
+                                        <button class="weui-vcode-btn" v-on:click="confirmNewPartner" style="padding: 1px;margin-right: -8px;"><i class="weui-icon-success" style="font-size: 20px;"></i> </button>
+                                        <button class="weui-vcode-btn" v-on:click="cancelNewPartner" style="padding: 0"><i class="weui-icon-cancel"></i></button>
+                                    </div>
+                                </div>                                                           
+                            </div>
+                            <article class="weui-article" style="padding: 20px 0; padding-bottom: 0;">
+                                <section>
+                                    <h2 class="title" style="margin-bottom: 0.6em">空床情况</h2>
+                                    <section class="block">
+                                        <h3>5号楼</h3>
+                                        <p v-for="(item, index) in building5">剩余空床数目为 {{ index + 1}} 的房间<span class="right">{{ item }} 个</span></p>
+                                    </section>
+                                    <section class="block">
+                                        <h3>13号楼</h3>
+                                        <p v-for="(item, index) in building13">剩余空床数目为 {{ index + 1}} 的房间<span class="right">{{ item }} 个</span></p>
+                                    </section>      
+                                    <section class="block">
+                                        <h3>14号楼</h3>
+                                        <p v-for="(item, index) in building14">剩余空床数目为 {{ index + 1}} 的房间<span class="right">{{ item }} 个</span></p>
+                                    </section>                               
+                                </section>
+                            </article>
+                            <a class="weui-btn weui-btn_primary btn-commit" href="javascript:" id="showTooltips" v-on:click="confirmDistribute">确定</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="loadingToast" style="opacity: 0; display: none;">
+                    <div class="weui-mask"></div>
+                    <div class="weui-toast">
+                        <i class="weui-loading weui-icon_toast"></i>
+                        <p class="weui-toast__content" id="loadingMsg">处理中</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script type="text/javascript" src="../scripts/vue.js"></script>
+        <script type="text/javascript" src="../scripts/zepto.min.js"></script>
+        <script type="text/javascript" src="../scripts/checkDorm.js"></script>
+    </body>
+</html>

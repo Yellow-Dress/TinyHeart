@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<link type="text/css" href="../styles/css/common.css" rel="stylesheet"/>
+		<link type="text/css" href="../styles/css/info.css" rel="stylesheet" />
+		<link rel="icon" href="../img/favicon.ico" type="image/x-icon" />
+		<link rel="shortcut icon" href="../img/favicon.ico" type="image/x-icon" />
+		<title>宿舍管理系统 - DMS</title>
+	</head>
+	<body>
+		<div class="nav">
+			<div class="logo">宿舍管理系统</div>
+			<div class="user">
+				<i class="iconfont">&#xe787;</i>admin
+				<span class="btn btn-green js-func" style="margin-left: 10px">返回功能选择</span>
+				<span class="btn btn-red js-logout" style="margin-left: 10px">退出</span>
+			</div>
+		</div>
+		<div class="content" id="dormInfo">
+			<div class="main-block large">
+				<div class="studentInfo-hd">
+					<span class="teacher-name"><strong>宿舍编号管理</strong></span>
+					<span class="student-count" >共 <i>{{ dormInfos.length }}</i> 个</span>
+					<span style="margin-left: 60px">宿舍号：</span>
+					<input class="search-input" type="text" id="roomNo-input" />
+					<span class="btn btn-blue js-roomNo-search">搜索</span>
+					<div class="operation-box">
+						<span class="btn btn-green"><a href="http://localhost:4000/getTemplate/dormInfo" style="text-decoration: none; color: #fff;">Excel模板下载</a></span>
+						<span class="btn btn-green js-upload">Excel导入</span>
+						<form id="uploadDormInfoForm" action="http://localhost:4000/uploadDormInfo" name="dormInfo" method="post" enctype= "multipart/form-data" style="display: none;"> 
+							<input id="uploadDormInfo" type="file" name="upfile" />  
+						</form>  
+						<span class="btn btn-orange js-add">新增</span>
+						<span class="btn btn-red js-delete">删除</span>
+					</div>
+				</div>
+				<div class="studentInfo-bd">
+					<table cellpadding="0" cellspacing="0" border="0">
+						<thead>
+							<tr>
+								<th style="width: 10px;"><input disabled="disabled" type="checkbox" class="js-selectAll"/></th>
+								<th style="width: 5%">楼号</th>
+								<th style="width: 7%;">宿舍号</th>
+							</tr>
+						</thead>
+						<tbody class="js-tbody">
+							<tr v-for="(dormInfo, index) in dormInfos" :data-index="index">
+								<td><input type="checkbox" class="js-selectOne" /></td>
+								<td>{{ dormInfo.buildingNo }}</td>
+								<td>{{ dormInfo.roomNo }}</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<div class="modal">
+			<div class="modal-content student">
+				<span class="title"><strong>新增宿舍信息</strong></span>
+				<div class="row">
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">楼号：</div>
+							<div class="input">
+								<input type="text" class="js-buildingNo"/>
+							</div>
+						</div>
+					</div>
+					<div class="sm-item">
+						<div class="item-content">
+							<div class="text">宿舍号：</div>
+							<div class="input">
+								<input type="text" class="js-roomNo"/>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="operation-box">
+					<span class="btn btn-green js-submit">确认</span><span class="btn btn-red js-cancel">取消</span>
+				</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="../scripts/vue.js"></script>
+		<script type="text/javascript" src="../scripts/zepto.min.js"></script>
+		<script type="text/javascript" src="../scripts/common.js"></script>
+		<script type="text/javascript" src="../scripts/dormInfo.js" charset="utf-8"></script>
+	</body>
+</html>
